@@ -276,6 +276,12 @@ func validateDirectiveName(s string) bool {
 // name: a leading letter, then letters, digits, `_` and `-`. The leading letter
 // is what separates a namespace from a name — `dns.2x` is rejected while
 // `dns.srv2` is not.
+//
+// Deprecated: 这条规则在 spec_cn.md 的新码表下已不存在——
+// 码表放宽为 [^\x00-\x20\x7F-\x{10FFFF}{}"`#]+ 之后，`dns.2x`、`.dns`、`dns..x`
+// 都是合法的 directive name。本函数与 validateDirectiveName 里的按段循环都会被移除。
+//
+// TODO: 码表落地时删除本函数，并把 validateDirectiveName 改成按码表逐 rune 校验。
 func isDirectiveSegment(s string) bool {
 	if len(s) == 0 {
 		return false
