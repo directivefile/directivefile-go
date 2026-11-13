@@ -36,7 +36,7 @@ func expandTemplates(cmds []Command, templates Templates) ([]Command, error) {
 		cmd := &cmds[i]
 
 		if cmd.Directive == "tmpl" {
-			if len(cmd.Args) == 0 {
+			if len(cmd.Parameters) == 0 {
 				return nil, fmt.Errorf(
 					"%s: syntax: tmpl requires a template name",
 					cmd.Position,
@@ -49,7 +49,7 @@ func expandTemplates(cmds []Command, templates Templates) ([]Command, error) {
 				)
 			}
 
-			name := cmd.Args[0]
+			name := cmd.Parameters[0]
 			tmpl, ok := templates[name]
 			if !ok {
 				return nil, fmt.Errorf(
@@ -59,7 +59,7 @@ func expandTemplates(cmds []Command, templates Templates) ([]Command, error) {
 				)
 			}
 
-			rendered, err := tmpl.render(cmd.Args[1:], Origin{
+			rendered, err := tmpl.render(cmd.Parameters[1:], Origin{
 				TmplPosition: cmd.Position,
 				TemplateName: name,
 			})
@@ -93,9 +93,9 @@ func extractTemplates(cmds []Command) (Templates, []Command, error) {
 			continue
 		}
 
-		if len(cmd.Args) > 0 {
+		if len(cmd.Parameters) > 0 {
 			return nil, nil, fmt.Errorf(
-				"%s: syntax: template definition cannot have arguments",
+				"%s: syntax: template definition cannot have parameters",
 				cmd.Position,
 			)
 		}
@@ -158,7 +158,7 @@ func analyzeTemplateBody(cmds []Command, pos Position) ([]Slot, int, error) {
 				)
 			}
 
-			for argIndex, arg := range cmd.Args {
+			for argIndex, arg := range cmd.Parameters {
 				param, ok, err := parseTemplateArg(arg)
 				if err != nil {
 					return fmt.Errorf(
@@ -223,19 +223,19 @@ func parseTemplateArg(s string) (param int, ok bool, err error) {
 
 	index := s[6 : len(s)-2]
 	if index == "" || (len(index) > 1 && index[0] == '0') {
-		return 0, false, fmt.Errorf("invalid template argument: %s", s)
+		return 0, false, fmt.Errorf("invalid template parameter: %s", s)
 	}
 
 	for i := 0; i < len(index); i++ {
 		if index[i] < '0' || index[i] > '9' {
-			return 0, false, fmt.Errorf("invalid template argument: %s", s)
+			return 0, false, fmt.Errorf("invalid template parameter: %s", s)
 		}
 
 		param = param*10 + int(index[i]-'0')
 		// 调用方会 +1 得到 Arity，所以 param 必须 < maxTemplateArity，
 		// 等价于 param+1 <= maxTemplateArity。
 		if param >= maxTemplateArity {
-			return 0, false, fmt.Errorf("template argument index is too large: %s", s)
+			return 0, false, fmt.Errorf("template parameter index is too large: %s", s)
 		}
 	}
 
@@ -244,20 +244,20 @@ func parseTemplateArg(s string) (param int, ok bool, err error) {
 
 func validateTemplateSlots(slots []Slot, arity int) error {
 	if arity > maxTemplateArity {
-		return fmt.Errorf("template argument index is too large: %d", arity-1)
+		return fmt.Errorf("template parameter index is too large: %d", arity-1)
 	}
 	seen := make([]bool, arity)
 
 	for _, slot := range slots {
 		if slot.Param >= arity {
-			return fmt.Errorf("template argument %d is out of range", slot.Param)
+			return fmt.Errorf("template parameter %d is out of range", slot.Param)
 		}
 		seen[slot.Param] = true
 	}
 
 	for param, ok := range seen {
 		if !ok {
-			return fmt.Errorf("template argument %d is missing", param)
+			return fmt.Errorf("template parameter %d is missing", param)
 		}
 	}
 
@@ -268,7 +268,7 @@ func validateTemplateSlots(slots []Slot, arity int) error {
 func (t *Template) render(args []string, origin Origin) ([]Command, error) {
 	if len(args) != t.Arity {
 		return nil, fmt.Errorf(
-			"template %q expects %d arguments, got %d",
+			"template %q expects %d parameters, got %d",
 			t.Name,
 			t.Arity,
 			len(args),
@@ -299,9 +299,9 @@ func (t *Template) render(args []string, origin Origin) ([]Command, error) {
 			cmd = &cmd.SubCommands[i]
 		}
 
-		if slot.Arg < 0 || slot.Arg >= len(cmd.Args) {
+		if slot.Arg < 0 || slot.Arg >= len(cmd.Parameters) {
 			return nil, fmt.Errorf(
-				"template %q: slot argument index out of range",
+				"template %q: slot parameter index out of range",
 				t.Name,
 			)
 		}
@@ -313,7 +313,7 @@ func (t *Template) render(args []string, origin Origin) ([]Command, error) {
 			)
 		}
 
-		cmd.Args[slot.Arg] = args[slot.Param]
+		cmd.Parameters[slot.Arg] = args[slot.Param]
 	}
 
 	return body, nil
@@ -321,10 +321,10 @@ func (t *Template) render(args []string, origin Origin) ([]Command, error) {
 
 func cloneCommand(src Command, origin Origin) Command {
 	dst := Command{
-		Directive: src.Directive,
-		Args:      append([]string(nil), src.Args...),
-		Origin:    origin,
-		Position:  src.Position,
+		Directive:  src.Directive,
+		Parameters: append([]string(nil), src.Parameters...),
+		Origin:     origin,
+		Position:   src.Position,
 	}
 
 	if len(src.SubCommands) > 0 {

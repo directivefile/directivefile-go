@@ -23,9 +23,9 @@ func expandImports(cmds []Command, path string, origin Origin) ([]Command, error
 			continue
 		}
 
-		if len(cmd.Args) == 0 {
+		if len(cmd.Parameters) == 0 {
 			return nil, fmt.Errorf(
-				"%s: syntax: import requires at least one argument",
+				"%s: syntax: import requires at least one parameter",
 				cmd.Position,
 			)
 		}
@@ -39,7 +39,7 @@ func expandImports(cmds []Command, path string, origin Origin) ([]Command, error
 
 		var imported []Command
 
-		for _, arg := range cmd.Args {
+		for _, arg := range cmd.Parameters {
 			candidate := filepath.Join(filepath.Dir(path), arg)
 
 			if onImportChain(origin.ImportChain, candidate) {

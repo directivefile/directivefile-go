@@ -12,7 +12,7 @@ type File struct {
 
 type Command struct {
 	Directive   string
-	Args        []string
+	Parameters  []string
 	SubCommands []Command
 	Origin      Origin
 	Position    Position
@@ -179,7 +179,7 @@ func (p *parser) parseCommand(nesting int) (Command, error) {
 				if err != nil {
 					return cmd, err
 				}
-				cmd.Args = append(cmd.Args, arg)
+				cmd.Parameters = append(cmd.Parameters, arg)
 			}
 
 		case DoubleQuotedToken, BacktickQuotedToken:
@@ -188,7 +188,7 @@ func (p *parser) parseCommand(nesting int) (Command, error) {
 			if err != nil {
 				return cmd, err
 			}
-			cmd.Args = append(cmd.Args, arg)
+			cmd.Parameters = append(cmd.Parameters, arg)
 
 		case NewLine:
 			p.nextToken()
