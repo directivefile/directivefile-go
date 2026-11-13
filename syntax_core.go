@@ -66,9 +66,9 @@ func (cmd Directive) Source() string {
 	return cmd.Position.String()
 }
 
-// maxCommandDepth is the maximum number of nested command levels.
+// maxDirectiveDepth is the maximum number of nested command levels.
 // Depth starts at 0, so valid depths are 0 through 63.
-const maxCommandDepth = 64
+const maxDirectiveDepth = 64
 
 // parseDirectives parses the whole token stream into top-level commands.
 // Every Position is already stamped by the lexer, so no path is needed here.
@@ -201,10 +201,10 @@ func (p *parser) parseDirective(nesting int) (Directive, error) {
 }
 
 func (p *parser) parseSubDirectives(nesting int, leftBracePos Position) ([]Directive, error) {
-	if nesting >= maxCommandDepth {
+	if nesting >= maxDirectiveDepth {
 		return nil, fmt.Errorf("%s: syntax: command nesting depth exceeds %d",
 			leftBracePos,
-			maxCommandDepth)
+			maxDirectiveDepth)
 	}
 
 	var cmds []Directive

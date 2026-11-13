@@ -70,10 +70,10 @@ func validateFile(cmds []Directive) error {
 
 func validateCommands(cmds []Directive, depth int) error {
 
-	if depth > maxCommandDepth {
+	if depth > maxDirectiveDepth {
 		return fmt.Errorf(
 			"syntax: command nesting depth exceeds maximum of %d",
-			maxCommandDepth,
+			maxDirectiveDepth,
 		)
 	}
 	for _, cmd := range cmds {
