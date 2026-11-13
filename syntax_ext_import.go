@@ -67,7 +67,7 @@ func expandImports(cmds []Directive, path string, origin Origin) ([]Directive, e
 				return nil, err
 			}
 
-			if len(file.Commands) == 0 {
+			if len(file.Directives) == 0 {
 				return nil, fmt.Errorf(
 					"%s: syntax: imported file %q must contain at least one command",
 					cmd.Position,
@@ -85,9 +85,9 @@ func expandImports(cmds []Directive, path string, origin Origin) ([]Directive, e
 				ImportPosition: cmd.Position,
 				ImportChain:    chain,
 			}
-			setImportOrigin(file.Commands, origin)
+			setImportOrigin(file.Directives, origin)
 
-			imported = append(imported, file.Commands...)
+			imported = append(imported, file.Directives...)
 		}
 
 		result = append(result, imported...)

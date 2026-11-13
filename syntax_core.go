@@ -7,7 +7,7 @@ import (
 )
 
 type File struct {
-	Commands []Directive
+	Directives []Directive
 }
 
 type Directive struct {
