@@ -29,7 +29,7 @@ func parseFile(path string, origin Origin) (File, error) {
 
 	p := &parser{tokens: tokens}
 
-	cmds, err := p.parseCommands()
+	cmds, err := p.parseDirectives()
 	if err != nil {
 		return File{}, err
 	}

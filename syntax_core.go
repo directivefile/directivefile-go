@@ -70,9 +70,9 @@ func (cmd Directive) Source() string {
 // Depth starts at 0, so valid depths are 0 through 63.
 const maxCommandDepth = 64
 
-// parseCommands parses the whole token stream into top-level commands.
+// parseDirectives parses the whole token stream into top-level commands.
 // Every Position is already stamped by the lexer, so no path is needed here.
-func (p *parser) parseCommands() ([]Directive, error) {
+func (p *parser) parseDirectives() ([]Directive, error) {
 	var cmds []Directive
 
 	for {
@@ -86,7 +86,7 @@ func (p *parser) parseCommands() ([]Directive, error) {
 			continue
 		}
 
-		cmd, err := p.parseCommand(0)
+		cmd, err := p.parseDirective(0)
 		if err != nil {
 			return nil, err
 		}
@@ -99,7 +99,7 @@ func (p *parser) parseCommands() ([]Directive, error) {
 
 // TODO: introduce a dedicated syntax-error type so every branch reports a
 // Position. A few defensive EOF branches still lack a useful location.
-func (p *parser) parseCommand(nesting int) (Directive, error) {
+func (p *parser) parseDirective(nesting int) (Directive, error) {
 	var cmd Directive
 
 	tok, index := p.nextToken()
@@ -227,7 +227,7 @@ func (p *parser) parseSubCommands(nesting int, leftBracePos Position) ([]Directi
 				return cmds, nil
 			}
 
-			cmd, err := p.parseCommand(nesting)
+			cmd, err := p.parseDirective(nesting)
 			if err != nil {
 				return nil, err
 			}

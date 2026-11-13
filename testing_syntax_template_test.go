@@ -26,9 +26,9 @@ func extractTemplateTestdata(t *testing.T, path string) (Templates, []Directive)
 	}
 
 	p := &parser{tokens: tokens}
-	cmds, err := p.parseCommands()
+	cmds, err := p.parseDirectives()
 	if err != nil {
-		t.Fatalf("parseCommands() error = %v", err)
+		t.Fatalf("parseDirectives() error = %v", err)
 	}
 
 	templates, commands, err := extractTemplates(cmds)
