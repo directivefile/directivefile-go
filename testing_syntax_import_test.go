@@ -20,14 +20,14 @@ func TestExpandImportsGoodCase(t *testing.T) {
 		// Every command that came from the imported file carries the same
 		// Origin: the import site in THIS file, plus the chain that reached it.
 		// The nested commands matter most — propagating the Origin into
-		// SubCommands was a real regression, and a flat-only fixture would not
+		// SubDirectives was a real regression, and a flat-only fixture would not
 		// have caught it.
 		imported := Origin{
 			ImportPosition: Position{Filename: path, Line: 8, Column: 1},
 			ImportChain:    []string{path, target},
 		}
 
-		want := File{Commands: []Command{
+		want := File{Commands: []Directive{
 			{
 				Name:     "aaa",
 				Position: Position{Filename: path, Line: 7, Column: 1},
@@ -36,7 +36,7 @@ func TestExpandImportsGoodCase(t *testing.T) {
 				Name:     "top",
 				Position: Position{Filename: target, Line: 1, Column: 1},
 				Origin:   imported,
-				SubCommands: []Command{
+				SubDirectives: []Directive{
 					{
 						Name:     "inner1",
 						Position: Position{Filename: target, Line: 2, Column: 5},
@@ -46,7 +46,7 @@ func TestExpandImportsGoodCase(t *testing.T) {
 						Name:     "inner2",
 						Position: Position{Filename: target, Line: 3, Column: 5},
 						Origin:   imported,
-						SubCommands: []Command{
+						SubDirectives: []Directive{
 							{
 								Name:     "deep",
 								Position: Position{Filename: target, Line: 4, Column: 9},

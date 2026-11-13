@@ -26,11 +26,11 @@ func TestParseCommandGoodCases(t *testing.T) {
 			t.Fatalf("parseCommand() error = %v", err)
 		}
 
-		want := Command{
+		want := Directive{
 			Name:       "proxy",
 			Parameters: []string{"http"},
 			Position:   Position{Filename: path, Line: 1, Column: 1},
-			SubCommands: []Command{
+			SubDirectives: []Directive{
 				{
 					Name:       "listen",
 					Parameters: []string{"127.0.0.1:8080"},
@@ -64,10 +64,10 @@ func TestParseCommandGoodCases(t *testing.T) {
 			t.Fatalf("parseCommand() error = %v", err)
 		}
 
-		want := Command{
+		want := Directive{
 			Name:     "server",
 			Position: Position{Filename: path, Line: 1, Column: 1},
-			SubCommands: []Command{
+			SubDirectives: []Directive{
 				{
 					Name:       "listen",
 					Parameters: []string{"80"},
@@ -77,7 +77,7 @@ func TestParseCommandGoodCases(t *testing.T) {
 					Name:       "route",
 					Parameters: []string{"/api", "backend"},
 					Position:   Position{Filename: path, Line: 3, Column: 5},
-					SubCommands: []Command{
+					SubDirectives: []Directive{
 						{
 							Name:       "rewrite",
 							Parameters: []string{"/v1"},

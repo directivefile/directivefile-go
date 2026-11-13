@@ -7,15 +7,15 @@ import (
 )
 
 type File struct {
-	Commands []Command
+	Commands []Directive
 }
 
-type Command struct {
-	Name        string
-	Parameters  []string
-	SubCommands []Command
-	Origin      Origin
-	Position    Position
+type Directive struct {
+	Name          string
+	Parameters    []string
+	SubDirectives []Directive
+	Origin        Origin
+	Position      Position
 }
 
 // Origin 描述一个命令是从哪里展开来的（tmpl 调用 / import）。
@@ -28,11 +28,11 @@ type Origin struct {
 }
 
 // HasSubCommands reports whether the command has a nested command block ({ ... }).
-func (cmd Command) HasSubCommands() bool {
-	return len(cmd.SubCommands) > 0
+func (cmd Directive) HasSubCommands() bool {
+	return len(cmd.SubDirectives) > 0
 }
 
-func (cmd Command) Source() string {
+func (cmd Directive) Source() string {
 	var b strings.Builder
 
 	if cmd.Origin.ImportPosition.IsValid() {
@@ -72,8 +72,8 @@ const maxCommandDepth = 64
 
 // parseCommands parses the whole token stream into top-level commands.
 // Every Position is already stamped by the lexer, so no path is needed here.
-func (p *parser) parseCommands() ([]Command, error) {
-	var cmds []Command
+func (p *parser) parseCommands() ([]Directive, error) {
+	var cmds []Directive
 
 	for {
 		tok, index := p.peekToken()
@@ -99,8 +99,8 @@ func (p *parser) parseCommands() ([]Command, error) {
 
 // TODO: introduce a dedicated syntax-error type so every branch reports a
 // Position. A few defensive EOF branches still lack a useful location.
-func (p *parser) parseCommand(nesting int) (Command, error) {
-	var cmd Command
+func (p *parser) parseCommand(nesting int) (Directive, error) {
+	var cmd Directive
 
 	tok, index := p.nextToken()
 	if index == -1 {
@@ -145,7 +145,7 @@ func (p *parser) parseCommand(nesting int) (Command, error) {
 				if err != nil {
 					return cmd, err
 				}
-				cmd.SubCommands = subCommands
+				cmd.SubDirectives = subCommands
 
 				// Next tok must be UnquotedToken and tok.Text = "}"
 				tok, index = p.nextToken()
@@ -157,7 +157,7 @@ func (p *parser) parseCommand(nesting int) (Command, error) {
 				}
 				rightBracePos := tok.Position
 
-				// Command must end with at least one newline.
+				// Directive must end with at least one newline.
 				tok, index = p.nextToken()
 				if index == -1 {
 					return cmd, fmt.Errorf("%s: syntax: unexpected EOF, expected newline after '}'", rightBracePos)
@@ -200,14 +200,14 @@ func (p *parser) parseCommand(nesting int) (Command, error) {
 	}
 }
 
-func (p *parser) parseSubCommands(nesting int, leftBracePos Position) ([]Command, error) {
+func (p *parser) parseSubCommands(nesting int, leftBracePos Position) ([]Directive, error) {
 	if nesting >= maxCommandDepth {
 		return nil, fmt.Errorf("%s: syntax: command nesting depth exceeds %d",
 			leftBracePos,
 			maxCommandDepth)
 	}
 
-	var cmds []Command
+	var cmds []Directive
 
 	for {
 		tok, index := p.peekToken()

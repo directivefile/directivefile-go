@@ -24,10 +24,10 @@ func TestParseFileGoodCases(t *testing.T) {
 		// A brace is structural only when it is a token of its own, so a `{` or
 		// `}` inside quotes (either quoting kind) is an ordinary parameter and
 		// never opens or closes a block.
-		want := File{Commands: []Command{{
+		want := File{Commands: []Directive{{
 			Name:     "command",
 			Position: Position{Filename: path, Line: 1, Column: 1},
-			SubCommands: []Command{
+			SubDirectives: []Directive{
 				{
 					Name:       "arg",
 					Parameters: []string{"{"},
@@ -62,11 +62,11 @@ func TestParseFileGoodCases(t *testing.T) {
 			t.Fatalf("parse() error = %v", err)
 		}
 
-		want := File{Commands: []Command{
+		want := File{Commands: []Directive{
 			{
 				Name:     "dns.forwarder",
 				Position: Position{Filename: path, Line: 12, Column: 1},
-				SubCommands: []Command{{
+				SubDirectives: []Directive{{
 					Name:       "upstream",
 					Parameters: []string{"1.1.1.1"},
 					Position:   Position{Filename: path, Line: 13, Column: 5},
@@ -75,10 +75,10 @@ func TestParseFileGoodCases(t *testing.T) {
 			{
 				Name:     "endpoint",
 				Position: Position{Filename: path, Line: 16, Column: 1},
-				SubCommands: []Command{{
+				SubDirectives: []Directive{{
 					Name:     "endpoint.http.proxy",
 					Position: Position{Filename: path, Line: 17, Column: 5},
-					SubCommands: []Command{{
+					SubDirectives: []Directive{{
 						Name:       "to",
 						Parameters: []string{"127.0.0.1:8080"},
 						Position:   Position{Filename: path, Line: 18, Column: 9},

@@ -65,7 +65,7 @@ func TestParseEnvGoodCases(t *testing.T) {
 				t.Fatalf("parse() error = %v", err)
 			}
 
-			want := File{Commands: []Command{{
+			want := File{Commands: []Directive{{
 				Name:       "cmd",
 				Parameters: tc.args,
 				Position:   Position{Filename: path, Line: tc.line, Column: 1},

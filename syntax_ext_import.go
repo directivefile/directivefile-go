@@ -8,16 +8,16 @@ import (
 
 const maxImportDepth = 32
 
-func expandImports(cmds []Command, path string, origin Origin) ([]Command, error) {
-	var result []Command
+func expandImports(cmds []Directive, path string, origin Origin) ([]Directive, error) {
+	var result []Directive
 
 	for _, cmd := range cmds {
 		if cmd.Name != "import" {
-			subCommands, err := expandImports(cmd.SubCommands, path, origin)
+			subCommands, err := expandImports(cmd.SubDirectives, path, origin)
 			if err != nil {
 				return nil, err
 			}
-			cmd.SubCommands = subCommands
+			cmd.SubDirectives = subCommands
 
 			result = append(result, cmd)
 			continue
@@ -37,7 +37,7 @@ func expandImports(cmds []Command, path string, origin Origin) ([]Command, error
 			)
 		}
 
-		var imported []Command
+		var imported []Directive
 
 		for _, arg := range cmd.Parameters {
 			candidate := filepath.Join(filepath.Dir(path), arg)
@@ -110,12 +110,12 @@ func formatImportChain(chain []string) string {
 	return strings.Join(chain, " -> ")
 }
 
-func setImportOrigin(cmds []Command, origin Origin) {
+func setImportOrigin(cmds []Directive, origin Origin) {
 	for i := range cmds {
 		if !cmds[i].Origin.ImportPosition.IsValid() {
 			cmds[i].Origin.ImportPosition = origin.ImportPosition
 			cmds[i].Origin.ImportChain = origin.ImportChain
 		}
-		setImportOrigin(cmds[i].SubCommands, origin)
+		setImportOrigin(cmds[i].SubDirectives, origin)
 	}
 }

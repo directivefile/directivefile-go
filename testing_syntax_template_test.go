@@ -17,7 +17,7 @@ import (
 // It deliberately stops BEFORE parseFile's expansion steps: once parseFile runs
 // extractTemplates itself, the template table is no longer observable, and the
 // Slots/Arity assertions below would have nothing to check.
-func extractTemplateTestdata(t *testing.T, path string) (Templates, []Command) {
+func extractTemplateTestdata(t *testing.T, path string) (Templates, []Directive) {
 	t.Helper()
 
 	tokens, err := Tokenize(readTestdata(t, path), path)
@@ -44,7 +44,7 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 		templates, commands := extractTemplateTestdata(t, path)
 
 		// The definition left the tree; the ordinary command stayed.
-		wantCommands := []Command{
+		wantCommands := []Directive{
 			{
 				Name:       "dns",
 				Parameters: []string{"example.com"},
@@ -66,7 +66,7 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 		want := &Template{
 			Name:  "proxy",
 			Arity: 2,
-			Body: []Command{
+			Body: []Directive{
 				{
 					Name:       "forward",
 					Parameters: []string{"{args[0]}", "{args[1]}", "{args[0]}"},
@@ -111,12 +111,12 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 		wantSite := &Template{
 			Name:  "site",
 			Arity: 2,
-			Body: []Command{
+			Body: []Directive{
 				{
 					Name:       "route",
 					Parameters: []string{"/api"},
 					Position:   Position{Filename: path, Line: 2, Column: 5},
-					SubCommands: []Command{
+					SubDirectives: []Directive{
 						{
 							Name:       "rewrite",
 							Parameters: []string{"{args[0]}"},
@@ -144,7 +144,7 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 		wantNoParameters := &Template{
 			Name:  "no-args",
 			Arity: 0,
-			Body: []Command{
+			Body: []Directive{
 				{
 					Name:     "logging",
 					Position: Position{Filename: path, Line: 9, Column: 5},
@@ -218,7 +218,7 @@ func TestExpandTemplatesBadCases(t *testing.T) {
 
 func TestTemplateRenderGoodCases(t *testing.T) {
 	// The origin is the CALL SITE, not the definition: render stamps it onto
-	// every command it produces, including nested SubCommands.
+	// every command it produces, including nested SubDirectives.
 	callSite := Origin{
 		TmplPosition: Position{Filename: "main.conf", Line: 7, Column: 3},
 		TemplateName: "tmpl_1",
@@ -228,7 +228,7 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 		template := Template{
 			Name:  "tmpl_1",
 			Arity: 1,
-			Body: []Command{
+			Body: []Directive{
 				{
 					Name:       "cmd",
 					Parameters: []string{"{args[0]}"},
@@ -244,7 +244,7 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		want := []Command{
+		want := []Directive{
 			{
 				Name:       "cmd",
 				Parameters: []string{"hello"},
@@ -266,11 +266,11 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 		template := Template{
 			Name:  "proxy",
 			Arity: 2,
-			Body: []Command{
+			Body: []Directive{
 				{
 					Name:       "proxy",
 					Parameters: []string{"http"},
-					SubCommands: []Command{
+					SubDirectives: []Directive{
 						{
 							Name:       "listen",
 							Parameters: []string{"{args[0]}"},
@@ -297,11 +297,11 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		want := []Command{
+		want := []Directive{
 			{
 				Name:       "proxy",
 				Parameters: []string{"http"},
-				SubCommands: []Command{
+				SubDirectives: []Directive{
 					{
 						Name:       "listen",
 						Parameters: []string{"127.0.0.1:8080"},

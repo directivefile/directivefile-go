@@ -7,7 +7,7 @@ type Templates map[string]*Template
 
 type Template struct {
 	Name string
-	Body []Command
+	Body []Directive
 	// Arity = max(Param) + 1，不是 len(Slots)：同一个 Param 允许在体内出现多次。
 	Arity int
 	Slots []Slot // 体内真正的占位符位置
@@ -16,22 +16,22 @@ type Template struct {
 const maxTemplateArity = 32
 
 // Slot 标记体内一个真正的占位符位置。命令用「索引路径」定位，
-// 因为 Body 是值切片，保存 *Command 会随切片复制而失效。
+// 因为 Body 是值切片，保存 *Directive 会随切片复制而失效。
 type Slot struct {
-	Path  []int // 从 Body 根逐层的 SubCommands 下标
+	Path  []int // 从 Body 根逐层的 SubDirectives 下标
 	Arg   int   // 该命令的第几个 Arg
 	Param int   // {args[Param]}
 }
 
-// 递归遍历每一个 cmds 的 SubCommands
+// 递归遍历每一个 cmds 的 SubDirectives
 // 如果 cmd.Name = "tmpl" 则尝试替换
 // tmpl command 的第一个参数，用作 tmpl 查询名字，如果没有查到，则直接报错
-// 查到 template 则调用 render 获取用以替换 []Command
-// 如果没有错误，则就地删除 tmpl command 就地插入 []Command
+// 查到 template 则调用 render 获取用以替换 []Directive
+// 如果没有错误，则就地删除 tmpl command 就地插入 []Directive
 //
 // expandTemplates 就地替换 cmds 中的 tmpl 调用。
 // 注意：它可能改写 cmds 的底层数组，**调用方必须使用返回值**，不能依赖入参保持不变。
-func expandTemplates(cmds []Command, templates Templates) ([]Command, error) {
+func expandTemplates(cmds []Directive, templates Templates) ([]Directive, error) {
 	for i := 0; i < len(cmds); i++ {
 		cmd := &cmds[i]
 
@@ -72,19 +72,19 @@ func expandTemplates(cmds []Command, templates Templates) ([]Command, error) {
 			continue
 		}
 
-		subCommands, err := expandTemplates(cmd.SubCommands, templates)
+		subCommands, err := expandTemplates(cmd.SubDirectives, templates)
 		if err != nil {
 			return nil, err
 		}
-		cmd.SubCommands = subCommands
+		cmd.SubDirectives = subCommands
 	}
 
 	return cmds, nil
 }
 
-func extractTemplates(cmds []Command) (Templates, []Command, error) {
+func extractTemplates(cmds []Directive) (Templates, []Directive, error) {
 	templates := make(Templates)
-	commands := make([]Command, 0, len(cmds))
+	commands := make([]Directive, 0, len(cmds))
 
 	for _, cmd := range cmds {
 		name := extractTemplateDirective(cmd.Name)
@@ -100,7 +100,7 @@ func extractTemplates(cmds []Command) (Templates, []Command, error) {
 			)
 		}
 
-		if len(cmd.SubCommands) == 0 {
+		if len(cmd.SubDirectives) == 0 {
 			return nil, nil, fmt.Errorf(
 				"%s: syntax: template %s requires a block",
 				cmd.Position,
@@ -116,14 +116,14 @@ func extractTemplates(cmds []Command) (Templates, []Command, error) {
 			)
 		}
 
-		slots, arity, err := analyzeTemplateBody(cmd.SubCommands, cmd.Position)
+		slots, arity, err := analyzeTemplateBody(cmd.SubDirectives, cmd.Position)
 		if err != nil {
 			return nil, nil, err
 		}
 
 		templates[name] = &Template{
 			Name:  name,
-			Body:  cmd.SubCommands,
+			Body:  cmd.SubDirectives,
 			Arity: arity,
 			Slots: slots,
 		}
@@ -139,13 +139,13 @@ func extractTemplateDirective(s string) string {
 	return s[1 : len(s)-1]
 }
 
-func analyzeTemplateBody(cmds []Command, pos Position) ([]Slot, int, error) {
+func analyzeTemplateBody(cmds []Directive, pos Position) ([]Slot, int, error) {
 	var slots []Slot
 	maxParam := -1
 
-	var walk func([]Command, []int) error
+	var walk func([]Directive, []int) error
 
-	walk = func(cmds []Command, path []int) error {
+	walk = func(cmds []Directive, path []int) error {
 		for i, cmd := range cmds {
 			cmdPath := appendPath(path, i)
 
@@ -182,7 +182,7 @@ func analyzeTemplateBody(cmds []Command, pos Position) ([]Slot, int, error) {
 				}
 			}
 
-			if err := walk(cmd.SubCommands, cmdPath); err != nil {
+			if err := walk(cmd.SubDirectives, cmdPath); err != nil {
 				return err
 			}
 		}
@@ -265,7 +265,7 @@ func validateTemplateSlots(slots []Slot, arity int) error {
 }
 
 // TODO better error info
-func (t *Template) render(args []string, origin Origin) ([]Command, error) {
+func (t *Template) render(args []string, origin Origin) ([]Directive, error) {
 	if len(args) != t.Arity {
 		return nil, fmt.Errorf(
 			"template %q expects %d parameters, got %d",
@@ -275,7 +275,7 @@ func (t *Template) render(args []string, origin Origin) ([]Command, error) {
 		)
 	}
 
-	body := make([]Command, len(t.Body))
+	body := make([]Directive, len(t.Body))
 	for i := range t.Body {
 		body[i] = cloneCommand(t.Body[i], origin)
 	}
@@ -290,13 +290,13 @@ func (t *Template) render(args []string, origin Origin) ([]Command, error) {
 
 		cmd := &body[slot.Path[0]]
 		for _, i := range slot.Path[1:] {
-			if i < 0 || i >= len(cmd.SubCommands) {
+			if i < 0 || i >= len(cmd.SubDirectives) {
 				return nil, fmt.Errorf(
 					"template %q: invalid slot path",
 					t.Name,
 				)
 			}
-			cmd = &cmd.SubCommands[i]
+			cmd = &cmd.SubDirectives[i]
 		}
 
 		if slot.Arg < 0 || slot.Arg >= len(cmd.Parameters) {
@@ -319,18 +319,18 @@ func (t *Template) render(args []string, origin Origin) ([]Command, error) {
 	return body, nil
 }
 
-func cloneCommand(src Command, origin Origin) Command {
-	dst := Command{
+func cloneCommand(src Directive, origin Origin) Directive {
+	dst := Directive{
 		Name:       src.Name,
 		Parameters: append([]string(nil), src.Parameters...),
 		Origin:     origin,
 		Position:   src.Position,
 	}
 
-	if len(src.SubCommands) > 0 {
-		dst.SubCommands = make([]Command, len(src.SubCommands))
-		for i := range src.SubCommands {
-			dst.SubCommands[i] = cloneCommand(src.SubCommands[i], origin)
+	if len(src.SubDirectives) > 0 {
+		dst.SubDirectives = make([]Directive, len(src.SubDirectives))
+		for i := range src.SubDirectives {
+			dst.SubDirectives[i] = cloneCommand(src.SubDirectives[i], origin)
 		}
 	}
 
