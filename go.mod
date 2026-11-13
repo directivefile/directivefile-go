@@ -1,3 +1,3 @@
-module github.com/n24-x/directivefile-go
+module github.com/directivefile/directivefile-go
 
 go 1.27
