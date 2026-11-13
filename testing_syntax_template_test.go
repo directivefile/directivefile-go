@@ -46,9 +46,9 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 		// The definition left the tree; the ordinary command stayed.
 		wantCommands := []Command{
 			{
-				Directive: "dns",
-				Args:      []string{"example.com"},
-				Position:  Position{Filename: path, Line: 1, Column: 1},
+				Directive:  "dns",
+				Parameters: []string{"example.com"},
+				Position:   Position{Filename: path, Line: 1, Column: 1},
 			},
 		}
 		if !reflect.DeepEqual(commands, wantCommands) {
@@ -68,14 +68,14 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 			Arity: 2,
 			Body: []Command{
 				{
-					Directive: "forward",
-					Args:      []string{"{args[0]}", "{args[1]}", "{args[0]}"},
-					Position:  Position{Filename: path, Line: 4, Column: 5},
+					Directive:  "forward",
+					Parameters: []string{"{args[0]}", "{args[1]}", "{args[0]}"},
+					Position:   Position{Filename: path, Line: 4, Column: 5},
 				},
 				{
-					Directive: "header",
-					Args:      []string{"{args[1]}"},
-					Position:  Position{Filename: path, Line: 5, Column: 5},
+					Directive:  "header",
+					Parameters: []string{"{args[1]}"},
+					Position:   Position{Filename: path, Line: 5, Column: 5},
 				},
 			},
 			// {args[0]} appears twice in "forward", and the body keeps BOTH:
@@ -113,19 +113,19 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 			Arity: 2,
 			Body: []Command{
 				{
-					Directive: "route",
-					Args:      []string{"/api"},
-					Position:  Position{Filename: path, Line: 2, Column: 5},
+					Directive:  "route",
+					Parameters: []string{"/api"},
+					Position:   Position{Filename: path, Line: 2, Column: 5},
 					SubCommands: []Command{
 						{
-							Directive: "rewrite",
-							Args:      []string{"{args[0]}"},
-							Position:  Position{Filename: path, Line: 3, Column: 9},
+							Directive:  "rewrite",
+							Parameters: []string{"{args[0]}"},
+							Position:   Position{Filename: path, Line: 3, Column: 9},
 						},
 						{
-							Directive: "upstream",
-							Args:      []string{"{args[1]}", "{args[0]}"},
-							Position:  Position{Filename: path, Line: 4, Column: 9},
+							Directive:  "upstream",
+							Parameters: []string{"{args[1]}", "{args[0]}"},
+							Position:   Position{Filename: path, Line: 4, Column: 9},
 						},
 					},
 				},
@@ -141,7 +141,7 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 		}
 
 		// No placeholders at all: arity 0 and no slots.
-		wantNoArgs := &Template{
+		wantNoParameters := &Template{
 			Name:  "no-args",
 			Arity: 0,
 			Body: []Command{
@@ -151,8 +151,8 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 				},
 			},
 		}
-		if got := templates["no-args"]; !reflect.DeepEqual(got, wantNoArgs) {
-			t.Fatalf("template no-args:\n got: %#v\nwant: %#v", got, wantNoArgs)
+		if got := templates["no-args"]; !reflect.DeepEqual(got, wantNoParameters) {
+			t.Fatalf("template no-args:\n got: %#v\nwant: %#v", got, wantNoParameters)
 		}
 	})
 }
@@ -170,7 +170,7 @@ func TestExpandTemplatesBadCases(t *testing.T) {
 	}{
 		{
 			"1-definition-with-args.conf",
-			":7:1: syntax: template definition cannot have arguments",
+			":7:1: syntax: template definition cannot have parameters",
 		},
 		{
 			"2-call-with-block.conf",
@@ -178,15 +178,15 @@ func TestExpandTemplatesBadCases(t *testing.T) {
 		},
 		{
 			"3-slot-gap.conf",
-			":7:1: syntax: template argument 1 is missing",
+			":7:1: syntax: template parameter 1 is missing",
 		},
 		{
 			"4-call-too-few-args.conf",
-			":12:1: syntax: template \"proxy\" expects 2 arguments, got 1",
+			":12:1: syntax: template \"proxy\" expects 2 parameters, got 1",
 		},
 		{
 			"5-call-too-many-args.conf",
-			":12:1: syntax: template \"proxy\" expects 2 arguments, got 3",
+			":12:1: syntax: template \"proxy\" expects 2 parameters, got 3",
 		},
 		{
 			"6-call-undefined-template.conf",
@@ -194,7 +194,7 @@ func TestExpandTemplatesBadCases(t *testing.T) {
 		},
 		{
 			"7-template-argument-index-too-large.conf",
-			":17:5: syntax: template argument index is too large: {args[32]}",
+			":17:5: syntax: template parameter index is too large: {args[32]}",
 		},
 	}
 
@@ -230,8 +230,8 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 			Arity: 1,
 			Body: []Command{
 				{
-					Directive: "cmd",
-					Args:      []string{"{args[0]}"},
+					Directive:  "cmd",
+					Parameters: []string{"{args[0]}"},
 				},
 			},
 			Slots: []Slot{
@@ -246,9 +246,9 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 
 		want := []Command{
 			{
-				Directive: "cmd",
-				Args:      []string{"hello"},
-				Origin:    callSite,
+				Directive:  "cmd",
+				Parameters: []string{"hello"},
+				Origin:     callSite,
 			},
 		}
 
@@ -268,16 +268,16 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 			Arity: 2,
 			Body: []Command{
 				{
-					Directive: "proxy",
-					Args:      []string{"http"},
+					Directive:  "proxy",
+					Parameters: []string{"http"},
 					SubCommands: []Command{
 						{
-							Directive: "listen",
-							Args:      []string{"{args[0]}"},
+							Directive:  "listen",
+							Parameters: []string{"{args[0]}"},
 						},
 						{
-							Directive: "upstream",
-							Args:      []string{"{args[1]}", "{args[0]}"},
+							Directive:  "upstream",
+							Parameters: []string{"{args[1]}", "{args[0]}"},
 						},
 					},
 				},
@@ -299,18 +299,18 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 
 		want := []Command{
 			{
-				Directive: "proxy",
-				Args:      []string{"http"},
+				Directive:  "proxy",
+				Parameters: []string{"http"},
 				SubCommands: []Command{
 					{
-						Directive: "listen",
-						Args:      []string{"127.0.0.1:8080"},
-						Origin:    origin,
+						Directive:  "listen",
+						Parameters: []string{"127.0.0.1:8080"},
+						Origin:     origin,
 					},
 					{
-						Directive: "upstream",
-						Args:      []string{"example.com:443", "127.0.0.1:8080"},
-						Origin:    origin,
+						Directive:  "upstream",
+						Parameters: []string{"example.com:443", "127.0.0.1:8080"},
+						Origin:     origin,
 					},
 				},
 				Origin: origin,

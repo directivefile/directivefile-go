@@ -27,14 +27,14 @@ func TestParseCommandGoodCases(t *testing.T) {
 		}
 
 		want := Command{
-			Directive: "proxy",
-			Args:      []string{"http"},
-			Position:  Position{Filename: path, Line: 1, Column: 1},
+			Directive:  "proxy",
+			Parameters: []string{"http"},
+			Position:   Position{Filename: path, Line: 1, Column: 1},
 			SubCommands: []Command{
 				{
-					Directive: "listen",
-					Args:      []string{"127.0.0.1:8080"},
-					Position:  Position{Filename: path, Line: 2, Column: 5},
+					Directive:  "listen",
+					Parameters: []string{"127.0.0.1:8080"},
+					Position:   Position{Filename: path, Line: 2, Column: 5},
 				},
 			},
 		}
@@ -69,24 +69,24 @@ func TestParseCommandGoodCases(t *testing.T) {
 			Position:  Position{Filename: path, Line: 1, Column: 1},
 			SubCommands: []Command{
 				{
-					Directive: "listen",
-					Args:      []string{"80"},
-					Position:  Position{Filename: path, Line: 2, Column: 5},
+					Directive:  "listen",
+					Parameters: []string{"80"},
+					Position:   Position{Filename: path, Line: 2, Column: 5},
 				},
 				{
-					Directive: "route",
-					Args:      []string{"/api", "backend"},
-					Position:  Position{Filename: path, Line: 3, Column: 5},
+					Directive:  "route",
+					Parameters: []string{"/api", "backend"},
+					Position:   Position{Filename: path, Line: 3, Column: 5},
 					SubCommands: []Command{
 						{
-							Directive: "rewrite",
-							Args:      []string{"/v1"},
-							Position:  Position{Filename: path, Line: 4, Column: 9},
+							Directive:  "rewrite",
+							Parameters: []string{"/v1"},
+							Position:   Position{Filename: path, Line: 4, Column: 9},
 						},
 						{
-							Directive: "upstream",
-							Args:      []string{"app"},
-							Position:  Position{Filename: path, Line: 6, Column: 9},
+							Directive:  "upstream",
+							Parameters: []string{"app"},
+							Position:   Position{Filename: path, Line: 6, Column: 9},
 						},
 					},
 				},

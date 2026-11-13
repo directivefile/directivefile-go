@@ -66,9 +66,9 @@ func TestParseEnvGoodCases(t *testing.T) {
 			}
 
 			want := File{Commands: []Command{{
-				Directive: "cmd",
-				Args:      tc.args,
-				Position:  Position{Filename: path, Line: tc.line, Column: 1},
+				Directive:  "cmd",
+				Parameters: tc.args,
+				Position:   Position{Filename: path, Line: tc.line, Column: 1},
 			}}}
 			if !reflect.DeepEqual(file, want) {
 				t.Fatalf("parse():\n got: %#v\nwant: %#v", file, want)
@@ -93,7 +93,7 @@ func TestParseEnvBadCases(t *testing.T) {
 			t.Fatal("expected error, got nil")
 		}
 
-		// Substitution only happens while reading Args, so the directive token
+		// Substitution only happens while reading Parameters, so the directive token
 		// reaches validateDirective untouched and fails its shape rule.
 		wantErr := path + ":10:1: syntax: invalid directive: {$PROXY}"
 		if !strings.Contains(err.Error(), wantErr) {
