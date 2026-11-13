@@ -88,7 +88,7 @@ func validateDirectives(cmds []Directive, depth int) error {
 				"%s: syntax: tmpl command must be expanded",
 				cmd.Source(),
 			)
-		case !isNormalDirective(cmd.Name):
+		case isTemplateDirectiveName(cmd.Name):
 			return fmt.Errorf(
 				"%s: syntax: template directive %s must be expanded",
 				cmd.Source(),
