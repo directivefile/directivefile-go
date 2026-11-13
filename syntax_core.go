@@ -109,8 +109,8 @@ func (p *parser) parseDirective(nesting int) (Directive, error) {
 	if tok.Type != UnquotedToken {
 		return cmd, fmt.Errorf("%s: syntax: expected directive (UnquotedToken), got %s", tok.Position, tok.Type)
 	}
-	if !validateDirective(tok.Text) {
-		return cmd, fmt.Errorf("%s: syntax: invalid directive: %s", tok.Position, tok.Text)
+	if !validateDirectiveName(tok.Text) {
+		return cmd, fmt.Errorf("%s: syntax: invalid directive name: %s", tok.Position, tok.Text)
 	}
 	cmd.Name = tok.Text
 	cmd.Position = tok.Position
@@ -253,8 +253,8 @@ func resolveArg(tok Token) (string, error) {
 	return value, nil
 }
 
-// validateDirective reports whether s may name a directive.
-func validateDirective(s string) bool {
+// validateDirectiveName reports whether s may name a directive.
+func validateDirectiveName(s string) bool {
 	if len(s) == 0 {
 		return false
 	}

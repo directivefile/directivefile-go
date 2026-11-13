@@ -115,7 +115,7 @@ func TestParseFileBadCases(t *testing.T) {
 			t.Fatal("expected error, got nil")
 		}
 
-		wantErr := path + ":3:1: syntax: invalid directive: {"
+		wantErr := path + ":3:1: syntax: invalid directive name: {"
 		if !strings.Contains(err.Error(), wantErr) {
 			t.Fatalf("expected error containing %q, got %q", wantErr, err)
 		}
@@ -216,7 +216,7 @@ func TestParseFileBadCases(t *testing.T) {
 			t.Fatal("expected error, got nil")
 		}
 
-		wantErr := path + ":8:1: syntax: invalid directive: .dns"
+		wantErr := path + ":8:1: syntax: invalid directive name: .dns"
 		if !strings.Contains(err.Error(), wantErr) {
 			t.Fatalf("expected error containing %q, got %q", wantErr, err)
 		}
@@ -233,7 +233,7 @@ func TestParseFileBadCases(t *testing.T) {
 			t.Fatal("expected error, got nil")
 		}
 
-		wantErr := path + ":9:1: syntax: invalid directive: dns."
+		wantErr := path + ":9:1: syntax: invalid directive name: dns."
 		if !strings.Contains(err.Error(), wantErr) {
 			t.Fatalf("expected error containing %q, got %q", wantErr, err)
 		}
@@ -248,7 +248,7 @@ func TestParseFileBadCases(t *testing.T) {
 			t.Fatal("expected error, got nil")
 		}
 
-		wantErr := path + ":7:1: syntax: invalid directive: dns..forwarder"
+		wantErr := path + ":7:1: syntax: invalid directive name: dns..forwarder"
 		if !strings.Contains(err.Error(), wantErr) {
 			t.Fatalf("expected error containing %q, got %q", wantErr, err)
 		}
@@ -265,7 +265,7 @@ func TestParseFileBadCases(t *testing.T) {
 			t.Fatal("expected error, got nil")
 		}
 
-		wantErr := path + ":11:1: syntax: invalid directive: dns.2x"
+		wantErr := path + ":11:1: syntax: invalid directive name: dns.2x"
 		if !strings.Contains(err.Error(), wantErr) {
 			t.Fatalf("expected error containing %q, got %q", wantErr, err)
 		}

@@ -94,8 +94,8 @@ func TestParseEnvBadCases(t *testing.T) {
 		}
 
 		// Substitution only happens while reading Parameters, so the directive token
-		// reaches validateDirective untouched and fails its shape rule.
-		wantErr := path + ":10:1: syntax: invalid directive: {$PROXY}"
+		// reaches validateDirectiveName untouched and fails its shape rule.
+		wantErr := path + ":10:1: syntax: invalid directive name: {$PROXY}"
 		if !strings.Contains(err.Error(), wantErr) {
 			t.Fatalf("expected error containing %q, got %q", wantErr, err)
 		}
