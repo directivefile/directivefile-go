@@ -141,7 +141,7 @@ func (p *parser) parseDirective(nesting int) (Directive, error) {
 				// Additional blank lines are allowed.
 				p.skipNewLines()
 
-				subCommands, err := p.parseSubCommands(nesting+1, leftBracePos)
+				subCommands, err := p.parseSubDirectives(nesting+1, leftBracePos)
 				if err != nil {
 					return cmd, err
 				}
@@ -200,7 +200,7 @@ func (p *parser) parseDirective(nesting int) (Directive, error) {
 	}
 }
 
-func (p *parser) parseSubCommands(nesting int, leftBracePos Position) ([]Directive, error) {
+func (p *parser) parseSubDirectives(nesting int, leftBracePos Position) ([]Directive, error) {
 	if nesting >= maxCommandDepth {
 		return nil, fmt.Errorf("%s: syntax: command nesting depth exceeds %d",
 			leftBracePos,
