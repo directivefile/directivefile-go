@@ -65,10 +65,10 @@ func parseFile(path string, origin Origin) (File, error) {
 }
 
 func validateFile(cmds []Directive) error {
-	return validateCommands(cmds, 1)
+	return validateDirectives(cmds, 1)
 }
 
-func validateCommands(cmds []Directive, depth int) error {
+func validateDirectives(cmds []Directive, depth int) error {
 
 	if depth > maxDirectiveDepth {
 		return fmt.Errorf(
@@ -96,7 +96,7 @@ func validateCommands(cmds []Directive, depth int) error {
 			)
 		}
 		if len(cmd.SubDirectives) > 0 {
-			if err := validateCommands(cmd.SubDirectives, depth+1); err != nil {
+			if err := validateDirectives(cmd.SubDirectives, depth+1); err != nil {
 				return err
 			}
 		}
