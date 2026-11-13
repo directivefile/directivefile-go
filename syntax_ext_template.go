@@ -86,8 +86,15 @@ func extractTemplates(cmds []Directive) (Templates, []Directive, error) {
 	templates := make(Templates)
 	commands := make([]Directive, 0, len(cmds))
 
+	extractDirectiveName := func(s string) string {
+		if s[0] != '(' || s[len(s)-1] != ')' {
+			return ""
+		}
+		return s[1 : len(s)-1]
+	}
+
 	for _, cmd := range cmds {
-		name := extractTemplateDirective(cmd.Name)
+		name := extractDirectiveName(cmd.Name)
 		if name == "" {
 			commands = append(commands, cmd)
 			continue
@@ -130,13 +137,6 @@ func extractTemplates(cmds []Directive) (Templates, []Directive, error) {
 	}
 
 	return templates, commands, nil
-}
-
-func extractTemplateDirective(s string) string {
-	if s[0] != '(' || s[len(s)-1] != ')' {
-		return ""
-	}
-	return s[1 : len(s)-1]
 }
 
 func analyzeTemplateBody(cmds []Directive, pos Position) ([]Slot, int, error) {
