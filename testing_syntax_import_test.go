@@ -27,7 +27,7 @@ func TestExpandImportsGoodCase(t *testing.T) {
 			ImportChain:    []string{path, target},
 		}
 
-		want := File{Commands: []Directive{
+		want := File{Directives: []Directive{
 			{
 				Name:     "aaa",
 				Position: Position{Filename: path, Line: 7, Column: 1},

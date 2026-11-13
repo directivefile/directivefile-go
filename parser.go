@@ -61,7 +61,7 @@ func parseFile(path string, origin Origin) (File, error) {
 		return File{}, err
 	}
 
-	return File{Commands: cmds}, nil
+	return File{Directives: cmds}, nil
 }
 
 func validateFile(cmds []Directive) error {
