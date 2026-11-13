@@ -277,7 +277,7 @@ func (t *Template) render(args []string, origin Origin) ([]Directive, error) {
 
 	body := make([]Directive, len(t.Body))
 	for i := range t.Body {
-		body[i] = cloneCommand(t.Body[i], origin)
+		body[i] = cloneDirective(t.Body[i], origin)
 	}
 
 	for _, slot := range t.Slots {
@@ -319,7 +319,7 @@ func (t *Template) render(args []string, origin Origin) ([]Directive, error) {
 	return body, nil
 }
 
-func cloneCommand(src Directive, origin Origin) Directive {
+func cloneDirective(src Directive, origin Origin) Directive {
 	dst := Directive{
 		Name:       src.Name,
 		Parameters: append([]string(nil), src.Parameters...),
@@ -330,7 +330,7 @@ func cloneCommand(src Directive, origin Origin) Directive {
 	if len(src.SubDirectives) > 0 {
 		dst.SubDirectives = make([]Directive, len(src.SubDirectives))
 		for i := range src.SubDirectives {
-			dst.SubDirectives[i] = cloneCommand(src.SubDirectives[i], origin)
+			dst.SubDirectives[i] = cloneDirective(src.SubDirectives[i], origin)
 		}
 	}
 
