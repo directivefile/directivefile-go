@@ -66,7 +66,7 @@ func TestParseEnvGoodCases(t *testing.T) {
 			}
 
 			want := File{Commands: []Command{{
-				Directive:  "cmd",
+				Name:       "cmd",
 				Parameters: tc.args,
 				Position:   Position{Filename: path, Line: tc.line, Column: 1},
 			}}}

@@ -24,7 +24,7 @@ type Slot struct {
 }
 
 // 递归遍历每一个 cmds 的 SubCommands
-// 如果 cmd.Directive = "tmpl" 则尝试替换
+// 如果 cmd.Name = "tmpl" 则尝试替换
 // tmpl command 的第一个参数，用作 tmpl 查询名字，如果没有查到，则直接报错
 // 查到 template 则调用 render 获取用以替换 []Command
 // 如果没有错误，则就地删除 tmpl command 就地插入 []Command
@@ -35,7 +35,7 @@ func expandTemplates(cmds []Command, templates Templates) ([]Command, error) {
 	for i := 0; i < len(cmds); i++ {
 		cmd := &cmds[i]
 
-		if cmd.Directive == "tmpl" {
+		if cmd.Name == "tmpl" {
 			if len(cmd.Parameters) == 0 {
 				return nil, fmt.Errorf(
 					"%s: syntax: tmpl requires a template name",
@@ -87,7 +87,7 @@ func extractTemplates(cmds []Command) (Templates, []Command, error) {
 	commands := make([]Command, 0, len(cmds))
 
 	for _, cmd := range cmds {
-		name := extractTemplateDirective(cmd.Directive)
+		name := extractTemplateDirective(cmd.Name)
 		if name == "" {
 			commands = append(commands, cmd)
 			continue
@@ -150,11 +150,11 @@ func analyzeTemplateBody(cmds []Command, pos Position) ([]Slot, int, error) {
 			cmdPath := appendPath(path, i)
 
 			// TmplBlockCommandDirective must be a normal directive.
-			if !isNormalDirective(cmd.Directive) {
+			if !isNormalDirective(cmd.Name) {
 				return fmt.Errorf(
 					"%s: syntax: invalid template command directive: %s",
 					cmd.Position,
-					cmd.Directive,
+					cmd.Name,
 				)
 			}
 
@@ -321,7 +321,7 @@ func (t *Template) render(args []string, origin Origin) ([]Command, error) {
 
 func cloneCommand(src Command, origin Origin) Command {
 	dst := Command{
-		Directive:  src.Directive,
+		Name:       src.Name,
 		Parameters: append([]string(nil), src.Parameters...),
 		Origin:     origin,
 		Position:   src.Position,

@@ -78,21 +78,21 @@ func validateCommands(cmds []Command, depth int) error {
 	}
 	for _, cmd := range cmds {
 		switch {
-		case cmd.Directive == "import":
+		case cmd.Name == "import":
 			return fmt.Errorf(
 				"%s: syntax: import command must be expanded",
 				cmd.Source(),
 			)
-		case cmd.Directive == "tmpl":
+		case cmd.Name == "tmpl":
 			return fmt.Errorf(
 				"%s: syntax: tmpl command must be expanded",
 				cmd.Source(),
 			)
-		case !isNormalDirective(cmd.Directive):
+		case !isNormalDirective(cmd.Name):
 			return fmt.Errorf(
 				"%s: syntax: template directive %s must be expanded",
 				cmd.Source(),
-				cmd.Directive,
+				cmd.Name,
 			)
 		}
 		if len(cmd.SubCommands) > 0 {

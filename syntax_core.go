@@ -11,7 +11,7 @@ type File struct {
 }
 
 type Command struct {
-	Directive   string
+	Name        string
 	Parameters  []string
 	SubCommands []Command
 	Origin      Origin
@@ -112,7 +112,7 @@ func (p *parser) parseCommand(nesting int) (Command, error) {
 	if !validateDirective(tok.Text) {
 		return cmd, fmt.Errorf("%s: syntax: invalid directive: %s", tok.Position, tok.Text)
 	}
-	cmd.Directive = tok.Text
+	cmd.Name = tok.Text
 	cmd.Position = tok.Position
 
 	for {
