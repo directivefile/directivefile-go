@@ -150,7 +150,7 @@ func analyzeTemplateBody(cmds []Directive, pos Position) ([]Slot, int, error) {
 			cmdPath := appendPath(path, i)
 
 			// TmplBlockCommandDirective must be a normal directive.
-			if !isNormalDirective(cmd.Name) {
+			if isTemplateDirectiveName(cmd.Name) {
 				return fmt.Errorf(
 					"%s: syntax: invalid template command directive: %s",
 					cmd.Position,
@@ -201,12 +201,17 @@ func analyzeTemplateBody(cmds []Directive, pos Position) ([]Slot, int, error) {
 	return slots, maxParam + 1, nil
 }
 
-func isNormalDirective(s string) bool {
+// isTemplateDirectiveName reports whether the already-validated directive name
+// uses the template definition shape, `(name)`.
+//
+// 这是 validateDirectiveName 的弱化版：能走到这里的名字已经过了那道校验，
+// 所以只需判形状，不用再管长度、码表与点号分段。
+func isTemplateDirectiveName(s string) bool {
 	if len(s) == 0 {
-		return true
+		return false
 	}
 
-	return !(s[0] == '(' && s[len(s)-1] == ')')
+	return s[0] == '(' && s[len(s)-1] == ')'
 }
 
 func appendPath(path []int, index int) []int {
