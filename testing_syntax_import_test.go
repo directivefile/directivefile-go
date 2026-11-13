@@ -29,36 +29,36 @@ func TestExpandImportsGoodCase(t *testing.T) {
 
 		want := File{Commands: []Command{
 			{
-				Directive: "aaa",
-				Position:  Position{Filename: path, Line: 7, Column: 1},
+				Name:     "aaa",
+				Position: Position{Filename: path, Line: 7, Column: 1},
 			},
 			{
-				Directive: "top",
-				Position:  Position{Filename: target, Line: 1, Column: 1},
-				Origin:    imported,
+				Name:     "top",
+				Position: Position{Filename: target, Line: 1, Column: 1},
+				Origin:   imported,
 				SubCommands: []Command{
 					{
-						Directive: "inner1",
-						Position:  Position{Filename: target, Line: 2, Column: 5},
-						Origin:    imported,
+						Name:     "inner1",
+						Position: Position{Filename: target, Line: 2, Column: 5},
+						Origin:   imported,
 					},
 					{
-						Directive: "inner2",
-						Position:  Position{Filename: target, Line: 3, Column: 5},
-						Origin:    imported,
+						Name:     "inner2",
+						Position: Position{Filename: target, Line: 3, Column: 5},
+						Origin:   imported,
 						SubCommands: []Command{
 							{
-								Directive: "deep",
-								Position:  Position{Filename: target, Line: 4, Column: 9},
-								Origin:    imported,
+								Name:     "deep",
+								Position: Position{Filename: target, Line: 4, Column: 9},
+								Origin:   imported,
 							},
 						},
 					},
 				},
 			},
 			{
-				Directive: "bbb",
-				Position:  Position{Filename: path, Line: 9, Column: 1},
+				Name:     "bbb",
+				Position: Position{Filename: path, Line: 9, Column: 1},
 			},
 		}}
 

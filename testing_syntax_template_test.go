@@ -46,7 +46,7 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 		// The definition left the tree; the ordinary command stayed.
 		wantCommands := []Command{
 			{
-				Directive:  "dns",
+				Name:       "dns",
 				Parameters: []string{"example.com"},
 				Position:   Position{Filename: path, Line: 1, Column: 1},
 			},
@@ -68,12 +68,12 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 			Arity: 2,
 			Body: []Command{
 				{
-					Directive:  "forward",
+					Name:       "forward",
 					Parameters: []string{"{args[0]}", "{args[1]}", "{args[0]}"},
 					Position:   Position{Filename: path, Line: 4, Column: 5},
 				},
 				{
-					Directive:  "header",
+					Name:       "header",
 					Parameters: []string{"{args[1]}"},
 					Position:   Position{Filename: path, Line: 5, Column: 5},
 				},
@@ -113,17 +113,17 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 			Arity: 2,
 			Body: []Command{
 				{
-					Directive:  "route",
+					Name:       "route",
 					Parameters: []string{"/api"},
 					Position:   Position{Filename: path, Line: 2, Column: 5},
 					SubCommands: []Command{
 						{
-							Directive:  "rewrite",
+							Name:       "rewrite",
 							Parameters: []string{"{args[0]}"},
 							Position:   Position{Filename: path, Line: 3, Column: 9},
 						},
 						{
-							Directive:  "upstream",
+							Name:       "upstream",
 							Parameters: []string{"{args[1]}", "{args[0]}"},
 							Position:   Position{Filename: path, Line: 4, Column: 9},
 						},
@@ -146,8 +146,8 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 			Arity: 0,
 			Body: []Command{
 				{
-					Directive: "logging",
-					Position:  Position{Filename: path, Line: 9, Column: 5},
+					Name:     "logging",
+					Position: Position{Filename: path, Line: 9, Column: 5},
 				},
 			},
 		}
@@ -230,7 +230,7 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 			Arity: 1,
 			Body: []Command{
 				{
-					Directive:  "cmd",
+					Name:       "cmd",
 					Parameters: []string{"{args[0]}"},
 				},
 			},
@@ -246,7 +246,7 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 
 		want := []Command{
 			{
-				Directive:  "cmd",
+				Name:       "cmd",
 				Parameters: []string{"hello"},
 				Origin:     callSite,
 			},
@@ -268,15 +268,15 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 			Arity: 2,
 			Body: []Command{
 				{
-					Directive:  "proxy",
+					Name:       "proxy",
 					Parameters: []string{"http"},
 					SubCommands: []Command{
 						{
-							Directive:  "listen",
+							Name:       "listen",
 							Parameters: []string{"{args[0]}"},
 						},
 						{
-							Directive:  "upstream",
+							Name:       "upstream",
 							Parameters: []string{"{args[1]}", "{args[0]}"},
 						},
 					},
@@ -299,16 +299,16 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 
 		want := []Command{
 			{
-				Directive:  "proxy",
+				Name:       "proxy",
 				Parameters: []string{"http"},
 				SubCommands: []Command{
 					{
-						Directive:  "listen",
+						Name:       "listen",
 						Parameters: []string{"127.0.0.1:8080"},
 						Origin:     origin,
 					},
 					{
-						Directive:  "upstream",
+						Name:       "upstream",
 						Parameters: []string{"example.com:443", "127.0.0.1:8080"},
 						Origin:     origin,
 					},

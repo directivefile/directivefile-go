@@ -12,7 +12,7 @@ func expandImports(cmds []Command, path string, origin Origin) ([]Command, error
 	var result []Command
 
 	for _, cmd := range cmds {
-		if cmd.Directive != "import" {
+		if cmd.Name != "import" {
 			subCommands, err := expandImports(cmd.SubCommands, path, origin)
 			if err != nil {
 				return nil, err
