@@ -21,7 +21,7 @@ func TestParseCommandGoodCases(t *testing.T) {
 
 		p := &parser{tokens: tokens}
 
-		got, err := p.parseCommand(0)
+		got, err := p.parseDirective(0)
 		if err != nil {
 			t.Fatalf("parseCommand() error = %v", err)
 		}
@@ -59,7 +59,7 @@ func TestParseCommandGoodCases(t *testing.T) {
 
 		p := &parser{tokens: tokens}
 
-		got, err := p.parseCommand(0)
+		got, err := p.parseDirective(0)
 		if err != nil {
 			t.Fatalf("parseCommand() error = %v", err)
 		}
