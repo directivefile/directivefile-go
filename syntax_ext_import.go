@@ -30,7 +30,7 @@ func expandImports(cmds []Directive, path string, origin Origin) ([]Directive, e
 			)
 		}
 
-		if cmd.HasSubCommands() {
+		if cmd.HasSubDirectives() {
 			return nil, fmt.Errorf(
 				"%s: syntax: import command cannot have a block",
 				cmd.Position,

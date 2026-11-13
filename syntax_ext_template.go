@@ -42,7 +42,7 @@ func expandTemplates(cmds []Directive, templates Templates) ([]Directive, error)
 					cmd.Position,
 				)
 			}
-			if cmd.HasSubCommands() {
+			if cmd.HasSubDirectives() {
 				return nil, fmt.Errorf(
 					"%s: syntax: tmpl command cannot have a block",
 					cmd.Position,

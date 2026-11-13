@@ -27,8 +27,8 @@ type Origin struct {
 	ImportChain    []string
 }
 
-// HasSubCommands reports whether the command has a nested command block ({ ... }).
-func (cmd Directive) HasSubCommands() bool {
+// HasSubDirectives reports whether the command has a nested command block ({ ... }).
+func (cmd Directive) HasSubDirectives() bool {
 	return len(cmd.SubDirectives) > 0
 }
 
