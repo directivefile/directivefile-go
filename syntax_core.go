@@ -118,7 +118,7 @@ func (p *parser) parseDirective(nesting int) (Directive, error) {
 	for {
 		tok, index = p.peekToken()
 		if index == -1 {
-			return cmd, fmt.Errorf("%s: syntax: expected newline after command", cmd.Position)
+			return cmd, fmt.Errorf("%s: syntax: expected newline after directive", cmd.Position)
 		}
 
 		switch tok.Type {
@@ -202,7 +202,7 @@ func (p *parser) parseDirective(nesting int) (Directive, error) {
 
 func (p *parser) parseSubDirectives(nesting int, leftBracePos Position) ([]Directive, error) {
 	if nesting >= maxDirectiveDepth {
-		return nil, fmt.Errorf("%s: syntax: command nesting depth exceeds %d",
+		return nil, fmt.Errorf("%s: syntax: directive nesting depth exceeds %d",
 			leftBracePos,
 			maxDirectiveDepth)
 	}

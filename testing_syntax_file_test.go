@@ -10,7 +10,7 @@ import (
 // the whole tree, position included.
 //
 // 1-simple-block.conf and 2-nested-block.conf are driven by
-// TestParseCommandGoodCases instead; 3-backtick.conf and 4-comment.conf are not
+// TestParseDirectiveGoodCases instead; 3-backtick.conf and 4-comment.conf are not
 // driven yet.
 func TestParseFileGoodCases(t *testing.T) {
 	t.Run("5-brace-in-quote.conf", func(t *testing.T) {
@@ -105,7 +105,7 @@ func TestParseFileGoodCases(t *testing.T) {
 // dotted name.
 func TestParseFileBadCases(t *testing.T) {
 	// The `{` sits on a line of its own, so `dns` ends at the newline and the
-	// `{` starts a command — which fails the directive shape rule. This is
+	// `{` starts a directive — which fails the directive shape rule. This is
 	// criterion 3: a block is the LAST ARGUMENT of its directive.
 	t.Run("1-block-open-next-line", func(t *testing.T) {
 		const path = "testsdata/syntax/file/badcases/1-block-open-next-line.conf"
@@ -138,7 +138,7 @@ func TestParseFileBadCases(t *testing.T) {
 		}
 	})
 
-	// Criterion 2: a block must hold at least one command. Reported at the `{`
+	// Criterion 2: a block must hold at least one directive. Reported at the `{`
 	// of the inner block, which is the empty one.
 	t.Run("3-empty-block", func(t *testing.T) {
 		const path = "testsdata/syntax/file/badcases/3-empty-block.conf"
@@ -154,7 +154,7 @@ func TestParseFileBadCases(t *testing.T) {
 		}
 	})
 
-	// `{ "key1:val1" }` is all on one line inside a command, so the `{` is
+	// `{ "key1:val1" }` is all on one line inside a directive, so the `{` is
 	// followed by a value rather than a newline.
 	t.Run("4-brace-in-one-line-1", func(t *testing.T) {
 		const path = "testsdata/syntax/file/badcases/4-brace-in-one-line-1.conf"
@@ -186,8 +186,8 @@ func TestParseFileBadCases(t *testing.T) {
 		}
 	})
 
-	// The position is the interesting half here. maxCommandDepth = 64 is counted
-	// in parseSubCommands, which is entered once per `{`, so the FIRST refused
+	// The position is the interesting half here. maxDirectiveDepth = 64 is counted
+	// in parseSubDirectives, which is entered once per `{`, so the FIRST refused
 	// brace is the 64th one — line 80, the `{` of `a63 {`. Pinning that line
 	// pins the boundary from both sides: a limit of 63 would report line 79, a
 	// limit of 65 would report nothing at all.
@@ -199,7 +199,7 @@ func TestParseFileBadCases(t *testing.T) {
 			t.Fatal("expected error, got nil")
 		}
 
-		wantErr := path + ":80:5: syntax: command nesting depth exceeds 64"
+		wantErr := path + ":80:5: syntax: directive nesting depth exceeds 64"
 		if !strings.Contains(err.Error(), wantErr) {
 			t.Fatalf("expected error containing %q, got %q", wantErr, err)
 		}

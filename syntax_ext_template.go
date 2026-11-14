@@ -44,7 +44,7 @@ func expandTemplates(cmds []Directive, templates Templates) ([]Directive, error)
 			}
 			if cmd.HasSubDirectives() {
 				return nil, fmt.Errorf(
-					"%s: syntax: tmpl command cannot have a block",
+					"%s: syntax: tmpl directive cannot have a block",
 					cmd.Position,
 				)
 			}
@@ -152,7 +152,7 @@ func analyzeTemplateBody(cmds []Directive, pos Position) ([]Slot, int, error) {
 			// TmplBlockCommandDirective must be a normal directive.
 			if isTemplateDirectiveName(cmd.Name) {
 				return fmt.Errorf(
-					"%s: syntax: invalid template command directive: %s",
+					"%s: template definition %s is not allowed in a template body",
 					cmd.Position,
 					cmd.Name,
 				)
@@ -240,7 +240,7 @@ func parseTemplateArg(s string) (param int, ok bool, err error) {
 		// 调用方会 +1 得到 Arity，所以 param 必须 < maxTemplateArity，
 		// 等价于 param+1 <= maxTemplateArity。
 		if param >= maxTemplateArity {
-			return 0, false, fmt.Errorf("template parameter index is too large: %s", s)
+			return 0, false, fmt.Errorf("%s exceeds the maximum of %d template parameters", s, maxTemplateArity)
 		}
 	}
 
@@ -249,20 +249,20 @@ func parseTemplateArg(s string) (param int, ok bool, err error) {
 
 func validateTemplateSlots(slots []Slot, arity int) error {
 	if arity > maxTemplateArity {
-		return fmt.Errorf("template parameter index is too large: %d", arity-1)
+		return fmt.Errorf("internal error: template arity %d exceeds the limit of %d (please report this as a bug)", arity, maxTemplateArity)
 	}
 	seen := make([]bool, arity)
 
 	for _, slot := range slots {
 		if slot.TemplateParam >= arity {
-			return fmt.Errorf("template parameter %d is out of range", slot.TemplateParam)
+			return fmt.Errorf("internal error: slot uses template parameter %d, but arity is only %d (please report this as a bug)", slot.TemplateParam, arity)
 		}
 		seen[slot.TemplateParam] = true
 	}
 
 	for param, ok := range seen {
 		if !ok {
-			return fmt.Errorf("template parameter %d is missing", param)
+			return fmt.Errorf("{args[%d]} is missing: placeholders must be numbered consecutively from 0", param)
 		}
 	}
 

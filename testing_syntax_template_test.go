@@ -1,6 +1,7 @@
 package directivefile
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -11,7 +12,7 @@ import (
 // definition nested inside a block.
 
 // extractTemplateTestdata drives one template fixture through the front half of
-// the pipeline — read file → lex → parse commands → extract templates — so the
+// the pipeline — read file → lex → parse directives → extract templates — so the
 // fixture is both the input and the source of every Position.
 //
 // It deliberately stops BEFORE parseFile's expansion steps: once parseFile runs
@@ -43,7 +44,7 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 		const path = "testsdata/syntax/template/goodcases/1-extract-and-keep-commands.conf"
 		templates, commands := extractTemplateTestdata(t, path)
 
-		// The definition left the tree; the ordinary command stayed.
+		// The definition left the tree; the ordinary directive stayed.
 		wantCommands := []Directive{
 			{
 				Name:       "dns",
@@ -96,7 +97,7 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 		const path = "testsdata/syntax/template/goodcases/2-nested-body-and-no-args.conf"
 		templates, commands := extractTemplateTestdata(t, path)
 
-		// The file holds definitions only, so nothing reaches the command tree.
+		// The file holds definitions only, so nothing reaches the directive tree.
 		if len(commands) != 0 {
 			t.Fatalf("commands: want none, got %#v", commands)
 		}
@@ -174,11 +175,11 @@ func TestExpandTemplatesBadCases(t *testing.T) {
 		},
 		{
 			"2-call-with-block.conf",
-			":12:1: syntax: tmpl command cannot have a block",
+			":12:1: syntax: tmpl directive cannot have a block",
 		},
 		{
 			"3-slot-gap.conf",
-			":7:1: syntax: template parameter 1 is missing",
+			":7:1: syntax: {args[1]} is missing: placeholders must be numbered consecutively from 0",
 		},
 		{
 			"4-call-too-few-args.conf",
@@ -194,7 +195,12 @@ func TestExpandTemplatesBadCases(t *testing.T) {
 		},
 		{
 			"7-template-argument-index-too-large.conf",
-			":17:5: syntax: template parameter index is too large: {args[32]}",
+			// 上限取自 maxTemplateArity，避免两处各写一个数字。
+			// 注意：fixture 里写死了 {args[32]}，改常量时要连 fixture 一起换。
+			fmt.Sprintf(
+				":17:5: syntax: {args[%d]} exceeds the maximum of %d template parameters",
+				maxTemplateArity, maxTemplateArity,
+			),
 		},
 	}
 
@@ -218,7 +224,7 @@ func TestExpandTemplatesBadCases(t *testing.T) {
 
 func TestTemplateRenderGoodCases(t *testing.T) {
 	// The origin is the CALL SITE, not the definition: render stamps it onto
-	// every command it produces, including nested SubDirectives.
+	// every directive it produces, including nested SubDirectives.
 	callSite := Origin{
 		TmplPosition: Position{Filename: "main.conf", Line: 7, Column: 3},
 		TemplateName: "tmpl_1",
@@ -257,7 +263,7 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 		}
 	})
 
-	t.Run("nested commands and repeated parameters", func(t *testing.T) {
+	t.Run("nested directives and repeated parameters", func(t *testing.T) {
 		origin := Origin{
 			TmplPosition: Position{Filename: "main.conf", Line: 12, Column: 1},
 			TemplateName: "proxy",

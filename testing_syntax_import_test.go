@@ -17,9 +17,9 @@ func TestExpandImportsGoodCase(t *testing.T) {
 			t.Fatalf("parse() error = %v", err)
 		}
 
-		// Every command that came from the imported file carries the same
+		// Every directive that came from the imported file carries the same
 		// Origin: the import site in THIS file, plus the chain that reached it.
-		// The nested commands matter most — propagating the Origin into
+		// The nested directives matter most — propagating the Origin into
 		// SubDirectives was a real regression, and a flat-only fixture would not
 		// have caught it.
 		imported := Origin{
@@ -82,7 +82,7 @@ func TestExpandImportBadCase(t *testing.T) {
 		// anything, so the message names the IMPORTED file. Note it carries no
 		// line:column — a defs-only file is caught later instead, by
 		// expandImports, and that one does report at the import line.
-		wantErr := "syntax: file " + target + " must contain at least one command"
+		wantErr := "syntax: file " + target + " must contain at least one directive"
 		if !strings.Contains(err.Error(), wantErr) {
 			t.Fatalf("expected error containing %q, got %q", wantErr, err)
 		}
@@ -101,7 +101,7 @@ func TestExpandImportBadCase(t *testing.T) {
 		// makes the file non-empty, so the import site is the first place that
 		// can report it — and unlike the empty-file case, that gives us a
 		// position. Asserting BOTH halves pins the difference.
-		wantErr := fmt.Sprintf("%s:13:1: syntax: imported file %q must contain at least one command", path, target)
+		wantErr := fmt.Sprintf("%s:13:1: syntax: imported file %q must contain at least one directive", path, target)
 		if !strings.Contains(err.Error(), wantErr) {
 			t.Fatalf("expected error containing %q, got %q", wantErr, err)
 		}

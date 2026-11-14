@@ -112,7 +112,7 @@ func TestParseEnvBadCases(t *testing.T) {
 		}
 
 		// Reported at the placeholder itself (line 8, column 5), not at the
-		// start of the command.
+		// start of the directive.
 		wantErr := path + `:8:5: environment variable "DF_TEST_ENV_NOT_SET" is not set`
 		if !strings.Contains(err.Error(), wantErr) {
 			t.Fatalf("expected error containing %q, got %q", wantErr, err)
