@@ -76,8 +76,8 @@ func (p *parser) parseDirectives() ([]Directive, error) {
 	var directives []Directive
 
 	for {
-		tok, index := p.peekToken()
-		if index == -1 {
+		tok, ok := p.peekToken()
+		if !ok {
 			break
 		}
 
@@ -102,8 +102,8 @@ func (p *parser) parseDirectives() ([]Directive, error) {
 func (p *parser) parseDirective(nesting int) (Directive, error) {
 	var d Directive
 
-	tok, index := p.nextToken()
-	if index == -1 {
+	tok, ok := p.nextToken()
+	if !ok {
 		return d, fmt.Errorf("syntax: expected directive, got EOF")
 	}
 	if tok.Type != UnquotedToken {
@@ -116,8 +116,8 @@ func (p *parser) parseDirective(nesting int) (Directive, error) {
 	d.Position = tok.Position
 
 	for {
-		tok, index = p.peekToken()
-		if index == -1 {
+		tok, ok = p.peekToken()
+		if !ok {
 			return d, fmt.Errorf("%s: syntax: expected newline after directive", d.Position)
 		}
 
@@ -130,8 +130,8 @@ func (p *parser) parseDirective(nesting int) (Directive, error) {
 				p.nextToken()
 
 				// Block must start on a new line.
-				tok, index = p.nextToken()
-				if index == -1 {
+				tok, ok = p.nextToken()
+				if !ok {
 					return d, fmt.Errorf("%s: syntax: unexpected EOF, expected newline after '{'", leftBracePos)
 				}
 				if tok.Type != NewLine {
@@ -148,8 +148,8 @@ func (p *parser) parseDirective(nesting int) (Directive, error) {
 				d.SubDirectives = subDirectives
 
 				// Next tok must be UnquotedToken and tok.Text = "}"
-				tok, index = p.nextToken()
-				if index == -1 {
+				tok, ok = p.nextToken()
+				if !ok {
 					return d, fmt.Errorf("syntax: unexpected EOF, expected '}'")
 				}
 				if tok.Type != UnquotedToken || tok.Text != "}" {
@@ -158,8 +158,8 @@ func (p *parser) parseDirective(nesting int) (Directive, error) {
 				rightBracePos := tok.Position
 
 				// Directive must end with at least one newline.
-				tok, index = p.nextToken()
-				if index == -1 {
+				tok, ok = p.nextToken()
+				if !ok {
 					return d, fmt.Errorf("%s: syntax: unexpected EOF, expected newline after '}'", rightBracePos)
 				}
 				if tok.Type != NewLine {
@@ -210,8 +210,8 @@ func (p *parser) parseSubDirectives(nesting int, leftBracePos Position) ([]Direc
 	var directives []Directive
 
 	for {
-		tok, index := p.peekToken()
-		if index == -1 {
+		tok, ok := p.peekToken()
+		if !ok {
 			return nil, fmt.Errorf("%s: syntax: unexpected EOF, expected '}'", leftBracePos)
 		}
 
