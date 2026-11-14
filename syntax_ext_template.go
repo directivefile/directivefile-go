@@ -72,11 +72,11 @@ func expandTemplates(directives []Directive, templates Templates) ([]Directive, 
 			continue
 		}
 
-		subCommands, err := expandTemplates(d.SubDirectives, templates)
+		subDirectives, err := expandTemplates(d.SubDirectives, templates)
 		if err != nil {
 			return nil, err
 		}
-		d.SubDirectives = subCommands
+		d.SubDirectives = subDirectives
 	}
 
 	return directives, nil
@@ -158,8 +158,8 @@ func analyzeTemplateBody(directives []Directive, pos Position) ([]Slot, int, err
 				)
 			}
 
-			for argIndex, arg := range d.Parameters {
-				param, ok, err := parseTemplateArg(arg)
+			for paramIdx, value := range d.Parameters {
+				param, ok, err := parseTemplateArg(value)
 				if err != nil {
 					return fmt.Errorf(
 						"%s: syntax: %w",
@@ -173,7 +173,7 @@ func analyzeTemplateBody(directives []Directive, pos Position) ([]Slot, int, err
 
 				slots = append(slots, Slot{
 					LocationPath:      cmdPath,
-					LocationParameter: argIndex,
+					LocationParameter: paramIdx,
 					TemplateParam:     param,
 				})
 
