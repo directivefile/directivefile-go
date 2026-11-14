@@ -108,32 +108,38 @@ func validateDirectives(directives []Directive, depth int, pos Position) error {
 
 type parser struct {
 	tokens         []Token
-	nextTokenIndex int // 当前的 token 下标
+	nextTokenIndex int // 下一条待读 token 的下标；nextToken 会把它推进一位
 }
 
-// nextToken returns the next Token and its index.
-// It returns -1 as the index when all tokens have been consumed.
-func (p *parser) nextToken() (Token, int) {
+// nextToken returns the next Token and whether one was available.
+// ok is false once all tokens have been consumed.
+//
+// 第二个返回值不能省。Token 的零值是 {Type: UnquotedToken, Text: ""}，
+// 而 UnquotedToken 就是 iota 的 0，零值与合法 token 无法区分——"读完了"
+// 这件事必须靠另一个值表达。不要试图把它简化成单个返回值或换成 error。
+func (p *parser) nextToken() (Token, bool) {
 	if p.nextTokenIndex >= len(p.tokens) {
-		return Token{}, -1
+		return Token{}, false
 	}
-	index := p.nextTokenIndex
+	tok := p.tokens[p.nextTokenIndex]
 	p.nextTokenIndex++
-	return p.tokens[index], index
+	return tok, true
 }
 
 // peekToken returns the next Token without consuming it.
-func (p *parser) peekToken() (Token, int) {
+// ok is false once all tokens have been consumed; see nextToken for why the
+// boolean is part of the signature.
+func (p *parser) peekToken() (Token, bool) {
 	if p.nextTokenIndex >= len(p.tokens) {
-		return Token{}, -1
+		return Token{}, false
 	}
-	return p.tokens[p.nextTokenIndex], p.nextTokenIndex
+	return p.tokens[p.nextTokenIndex], true
 }
 
 func (p *parser) skipNewLines() {
 	for {
-		tok, index := p.peekToken()
-		if index == -1 || tok.Type != NewLine {
+		tok, ok := p.peekToken()
+		if !ok || tok.Type != NewLine {
 			return
 		}
 		p.nextToken()
