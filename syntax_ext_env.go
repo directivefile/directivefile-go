@@ -7,7 +7,7 @@ import (
 
 // 环境变量必须是 {$ 开头 } 结尾
 // `{$NAME}`，其中 `NAME` 必须匹配 `[A-Za-z_][A-Za-z0-9_]*`。
-func validateEnvReference(reference string) (string, error) {
+func parseEnvReference(reference string) (string, error) {
 	if len(reference) < 3 || reference[0] != '{' || reference[1] != '$' || reference[len(reference)-1] != '}' {
 		return "", fmt.Errorf("invalid environment variable: %s", reference)
 	}
