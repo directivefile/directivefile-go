@@ -41,7 +41,7 @@ func parseFile(path string, origin Origin) (File, error) {
 	}
 
 	if len(cmds) == 0 && len(templates) == 0 {
-		return File{}, fmt.Errorf("syntax: file %s must contain at least one command", path)
+		return File{}, fmt.Errorf("syntax: file %s must contain at least one directive", path)
 	}
 
 	cmds, err = expandTemplates(cmds, templates)
@@ -65,14 +65,15 @@ func parseFile(path string, origin Origin) (File, error) {
 }
 
 func validateFile(cmds []Directive) error {
-	return validateDirectives(cmds, 1)
+	return validateDirectives(cmds, 1, Position{})
 }
 
-func validateDirectives(cmds []Directive, depth int) error {
-
+// pos 是这一层命令所属的父指令位置，只用于深度超限时给出定位。
+func validateDirectives(cmds []Directive, depth int, pos Position) error {
 	if depth > maxDirectiveDepth {
 		return fmt.Errorf(
-			"syntax: command nesting depth exceeds maximum of %d",
+			"%s: syntax: directive nesting depth exceeds %d",
+			pos,
 			maxDirectiveDepth,
 		)
 	}
@@ -80,29 +81,29 @@ func validateDirectives(cmds []Directive, depth int) error {
 		switch {
 		case cmd.Name == "import":
 			return fmt.Errorf(
-				"%s: syntax: import command must be expanded",
+				"%s: internal error: expandImports left an import directive in the "+
+					"tree (please report this as a bug)",
 				cmd.Source(),
 			)
 		case cmd.Name == "tmpl":
 			return fmt.Errorf(
-				"%s: syntax: tmpl command must be expanded",
+				"%s: syntax: tmpl calls are not allowed inside a template body",
 				cmd.Source(),
 			)
 		case isTemplateDirectiveName(cmd.Name):
 			return fmt.Errorf(
-				"%s: syntax: template directive %s must be expanded",
+				"%s: syntax: template definition %s is only allowed at the top level",
 				cmd.Source(),
 				cmd.Name,
 			)
 		}
 		if len(cmd.SubDirectives) > 0 {
-			if err := validateDirectives(cmd.SubDirectives, depth+1); err != nil {
+			if err := validateDirectives(cmd.SubDirectives, depth+1, cmd.Position); err != nil {
 				return err
 			}
 		}
 	}
 	return nil
-
 }
 
 type parser struct {

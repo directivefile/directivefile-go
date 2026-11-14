@@ -5,9 +5,9 @@ import (
 	"testing"
 )
 
-func TestParseCommandGoodCases(t *testing.T) {
+func TestParseDirectiveGoodCases(t *testing.T) {
 	// TODO: only the happy path is covered so far. Complete the suite by adding
-	// the error branches (missing newline after command, block not starting on a
+	// the error branches (missing newline after directive, block not starting on a
 	// new line, missing '}', unexpected '}', empty block, nesting-depth overflow,
 	// and the EOF cases) plus the remaining token kinds and deeper nesting.
 
@@ -23,7 +23,7 @@ func TestParseCommandGoodCases(t *testing.T) {
 
 		got, err := p.parseDirective(0)
 		if err != nil {
-			t.Fatalf("parseCommand() error = %v", err)
+			t.Fatalf("parseDirective() error = %v", err)
 		}
 
 		want := Directive{
@@ -40,11 +40,11 @@ func TestParseCommandGoodCases(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(got, want) {
-			t.Fatalf("parseCommand():\n got: %#v\nwant: %#v", got, want)
+			t.Fatalf("parseDirective():\n got: %#v\nwant: %#v", got, want)
 		}
 
 		if p.nextTokenIndex != len(tokens) {
-			t.Errorf("nextTokenIndex = %d, want %d (parseCommand did not stop at the trailing newline)",
+			t.Errorf("nextTokenIndex = %d, want %d (parseDirective did not stop at the trailing newline)",
 				p.nextTokenIndex, len(tokens))
 		}
 	})
@@ -61,7 +61,7 @@ func TestParseCommandGoodCases(t *testing.T) {
 
 		got, err := p.parseDirective(0)
 		if err != nil {
-			t.Fatalf("parseCommand() error = %v", err)
+			t.Fatalf("parseDirective() error = %v", err)
 		}
 
 		want := Directive{
@@ -94,11 +94,11 @@ func TestParseCommandGoodCases(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(got, want) {
-			t.Fatalf("parseCommand():\n got: %#v\nwant: %#v", got, want)
+			t.Fatalf("parseDirective():\n got: %#v\nwant: %#v", got, want)
 		}
 
 		if p.nextTokenIndex != len(tokens) {
-			t.Errorf("nextTokenIndex = %d, want %d (parseCommand did not stop at the trailing newline)",
+			t.Errorf("nextTokenIndex = %d, want %d (parseDirective did not stop at the trailing newline)",
 				p.nextTokenIndex, len(tokens))
 		}
 	})

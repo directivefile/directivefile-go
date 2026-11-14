@@ -32,7 +32,7 @@ func expandImports(cmds []Directive, path string, origin Origin) ([]Directive, e
 
 		if cmd.HasSubDirectives() {
 			return nil, fmt.Errorf(
-				"%s: syntax: import command cannot have a block",
+				"%s: syntax: import directive cannot have a block",
 				cmd.Position,
 			)
 		}
@@ -69,7 +69,7 @@ func expandImports(cmds []Directive, path string, origin Origin) ([]Directive, e
 
 			if len(file.Directives) == 0 {
 				return nil, fmt.Errorf(
-					"%s: syntax: imported file %q must contain at least one command",
+					"%s: syntax: imported file %q must contain at least one directive",
 					cmd.Position,
 					candidate,
 				)
