@@ -29,47 +29,47 @@ func parseFile(path string, origin Origin) (File, error) {
 
 	p := &parser{tokens: tokens}
 
-	cmds, err := p.parseDirectives()
+	directives, err := p.parseDirectives()
 	if err != nil {
 		return File{}, err
 	}
 
 	// expand template
-	templates, cmds, err := extractTemplates(cmds)
+	templates, directives, err := extractTemplates(directives)
 	if err != nil {
 		return File{}, err
 	}
 
-	if len(cmds) == 0 && len(templates) == 0 {
+	if len(directives) == 0 && len(templates) == 0 {
 		return File{}, fmt.Errorf("syntax: file %s must contain at least one directive", path)
 	}
 
-	cmds, err = expandTemplates(cmds, templates)
+	directives, err = expandTemplates(directives, templates)
 	if err != nil {
 		return File{}, err
 	}
 
 	// expand import
-	cmds, err = expandImports(cmds, path, origin)
+	directives, err = expandImports(directives, path, origin)
 	if err != nil {
 		return File{}, err
 	}
 
 	// validate file
-	err = validateFile(cmds)
+	err = validateFile(directives)
 	if err != nil {
 		return File{}, err
 	}
 
-	return File{Directives: cmds}, nil
+	return File{Directives: directives}, nil
 }
 
-func validateFile(cmds []Directive) error {
-	return validateDirectives(cmds, 1, Position{})
+func validateFile(directives []Directive) error {
+	return validateDirectives(directives, 1, Position{})
 }
 
 // pos 是这一层命令所属的父指令位置，只用于深度超限时给出定位。
-func validateDirectives(cmds []Directive, depth int, pos Position) error {
+func validateDirectives(directives []Directive, depth int, pos Position) error {
 	if depth > maxDirectiveDepth {
 		return fmt.Errorf(
 			"%s: syntax: directive nesting depth exceeds %d",
@@ -77,28 +77,28 @@ func validateDirectives(cmds []Directive, depth int, pos Position) error {
 			maxDirectiveDepth,
 		)
 	}
-	for _, cmd := range cmds {
+	for _, d := range directives {
 		switch {
-		case cmd.Name == "import":
+		case d.Name == "import":
 			return fmt.Errorf(
 				"%s: internal error: expandImports left an import directive in the "+
 					"tree (please report this as a bug)",
-				cmd.Source(),
+				d.Source(),
 			)
-		case cmd.Name == "tmpl":
+		case d.Name == "tmpl":
 			return fmt.Errorf(
 				"%s: syntax: tmpl calls are not allowed inside a template body",
-				cmd.Source(),
+				d.Source(),
 			)
-		case isTemplateDirectiveName(cmd.Name):
+		case isTemplateDirectiveName(d.Name):
 			return fmt.Errorf(
 				"%s: syntax: template definition %s is only allowed at the top level",
-				cmd.Source(),
-				cmd.Name,
+				d.Source(),
+				d.Name,
 			)
 		}
-		if len(cmd.SubDirectives) > 0 {
-			if err := validateDirectives(cmd.SubDirectives, depth+1, cmd.Position); err != nil {
+		if len(d.SubDirectives) > 0 {
+			if err := validateDirectives(d.SubDirectives, depth+1, d.Position); err != nil {
 				return err
 			}
 		}
@@ -120,7 +120,6 @@ func (p *parser) nextToken() (Token, int) {
 	index := p.nextTokenIndex
 	p.nextTokenIndex++
 	return p.tokens[index], index
-
 }
 
 // peekToken returns the next Token without consuming it.
