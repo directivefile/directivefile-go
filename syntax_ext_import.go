@@ -13,11 +13,11 @@ func expandImports(directives []Directive, path string, origin Origin) ([]Direct
 
 	for _, d := range directives {
 		if d.Name != "import" {
-			subCommands, err := expandImports(d.SubDirectives, path, origin)
+			subDirectives, err := expandImports(d.SubDirectives, path, origin)
 			if err != nil {
 				return nil, err
 			}
-			d.SubDirectives = subCommands
+			d.SubDirectives = subDirectives
 
 			result = append(result, d)
 			continue
@@ -39,8 +39,8 @@ func expandImports(directives []Directive, path string, origin Origin) ([]Direct
 
 		var imported []Directive
 
-		for _, arg := range d.Parameters {
-			candidate := filepath.Join(filepath.Dir(path), arg)
+		for _, param := range d.Parameters {
+			candidate := filepath.Join(filepath.Dir(path), param)
 
 			if onImportChain(origin.ImportChain, candidate) {
 				chain := append(
