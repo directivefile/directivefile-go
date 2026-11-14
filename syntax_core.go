@@ -73,7 +73,7 @@ const maxDirectiveDepth = 64
 // parseDirectives parses the whole token stream into top-level commands.
 // Every Position is already stamped by the lexer, so no path is needed here.
 func (p *parser) parseDirectives() ([]Directive, error) {
-	var cmds []Directive
+	var directives []Directive
 
 	for {
 		tok, index := p.peekToken()
@@ -86,39 +86,39 @@ func (p *parser) parseDirectives() ([]Directive, error) {
 			continue
 		}
 
-		cmd, err := p.parseDirective(0)
+		d, err := p.parseDirective(0)
 		if err != nil {
 			return nil, err
 		}
 
-		cmds = append(cmds, cmd)
+		directives = append(directives, d)
 	}
 
-	return cmds, nil
+	return directives, nil
 }
 
 // TODO: introduce a dedicated syntax-error type so every branch reports a
 // Position. A few defensive EOF branches still lack a useful location.
 func (p *parser) parseDirective(nesting int) (Directive, error) {
-	var cmd Directive
+	var d Directive
 
 	tok, index := p.nextToken()
 	if index == -1 {
-		return cmd, fmt.Errorf("syntax: expected directive, got EOF")
+		return d, fmt.Errorf("syntax: expected directive, got EOF")
 	}
 	if tok.Type != UnquotedToken {
-		return cmd, fmt.Errorf("%s: syntax: expected directive (UnquotedToken), got %s", tok.Position, tok.Type)
+		return d, fmt.Errorf("%s: syntax: expected directive (UnquotedToken), got %s", tok.Position, tok.Type)
 	}
 	if !validateDirectiveName(tok.Text) {
-		return cmd, fmt.Errorf("%s: syntax: invalid directive name: %s", tok.Position, tok.Text)
+		return d, fmt.Errorf("%s: syntax: invalid directive name: %s", tok.Position, tok.Text)
 	}
-	cmd.Name = tok.Text
-	cmd.Position = tok.Position
+	d.Name = tok.Text
+	d.Position = tok.Position
 
 	for {
 		tok, index = p.peekToken()
 		if index == -1 {
-			return cmd, fmt.Errorf("%s: syntax: expected newline after directive", cmd.Position)
+			return d, fmt.Errorf("%s: syntax: expected newline after directive", d.Position)
 		}
 
 		switch tok.Type {
@@ -132,10 +132,10 @@ func (p *parser) parseDirective(nesting int) (Directive, error) {
 				// Block must start on a new line.
 				tok, index = p.nextToken()
 				if index == -1 {
-					return cmd, fmt.Errorf("%s: syntax: unexpected EOF, expected newline after '{'", leftBracePos)
+					return d, fmt.Errorf("%s: syntax: unexpected EOF, expected newline after '{'", leftBracePos)
 				}
 				if tok.Type != NewLine {
-					return cmd, fmt.Errorf("%s: syntax: expected newline after '{' (block must start on a new line)", tok.Position)
+					return d, fmt.Errorf("%s: syntax: expected newline after '{' (block must start on a new line)", tok.Position)
 				}
 
 				// Additional blank lines are allowed.
@@ -143,59 +143,59 @@ func (p *parser) parseDirective(nesting int) (Directive, error) {
 
 				subCommands, err := p.parseSubDirectives(nesting+1, leftBracePos)
 				if err != nil {
-					return cmd, err
+					return d, err
 				}
-				cmd.SubDirectives = subCommands
+				d.SubDirectives = subCommands
 
 				// Next tok must be UnquotedToken and tok.Text = "}"
 				tok, index = p.nextToken()
 				if index == -1 {
-					return cmd, fmt.Errorf("syntax: unexpected EOF, expected '}'")
+					return d, fmt.Errorf("syntax: unexpected EOF, expected '}'")
 				}
 				if tok.Type != UnquotedToken || tok.Text != "}" {
-					return cmd, fmt.Errorf("%s: syntax: expected '}', got %q", tok.Position, tok.Text)
+					return d, fmt.Errorf("%s: syntax: expected '}', got %q", tok.Position, tok.Text)
 				}
 				rightBracePos := tok.Position
 
 				// Directive must end with at least one newline.
 				tok, index = p.nextToken()
 				if index == -1 {
-					return cmd, fmt.Errorf("%s: syntax: unexpected EOF, expected newline after '}'", rightBracePos)
+					return d, fmt.Errorf("%s: syntax: unexpected EOF, expected newline after '}'", rightBracePos)
 				}
 				if tok.Type != NewLine {
-					return cmd, fmt.Errorf("%s: syntax: expected newline after '}'", tok.Position)
+					return d, fmt.Errorf("%s: syntax: expected newline after '}'", tok.Position)
 				}
 
 				p.skipNewLines()
 
-				return cmd, nil
+				return d, nil
 
 			case "}":
-				return cmd, fmt.Errorf("%s: syntax: unexpected '}'", tok.Position)
+				return d, fmt.Errorf("%s: syntax: unexpected '}'", tok.Position)
 
 			default:
 				p.nextToken()
 				arg, err := resolveArg(tok)
 				if err != nil {
-					return cmd, err
+					return d, err
 				}
-				cmd.Parameters = append(cmd.Parameters, arg)
+				d.Parameters = append(d.Parameters, arg)
 			}
 
 		case DoubleQuotedToken, BacktickQuotedToken:
 			p.nextToken()
 			arg, err := resolveArg(tok)
 			if err != nil {
-				return cmd, err
+				return d, err
 			}
-			cmd.Parameters = append(cmd.Parameters, arg)
+			d.Parameters = append(d.Parameters, arg)
 
 		case NewLine:
 			p.nextToken()
-			return cmd, nil
+			return d, nil
 
 		default:
-			return cmd, fmt.Errorf("%s: syntax: unexpected token %v", tok.Position, tok.Type)
+			return d, fmt.Errorf("%s: syntax: unexpected token %v", tok.Position, tok.Type)
 		}
 	}
 }
@@ -207,7 +207,7 @@ func (p *parser) parseSubDirectives(nesting int, leftBracePos Position) ([]Direc
 			maxDirectiveDepth)
 	}
 
-	var cmds []Directive
+	var directives []Directive
 
 	for {
 		tok, index := p.peekToken()
@@ -221,17 +221,17 @@ func (p *parser) parseSubDirectives(nesting int, leftBracePos Position) ([]Direc
 
 		case UnquotedToken:
 			if tok.Text == "}" {
-				if len(cmds) == 0 {
+				if len(directives) == 0 {
 					return nil, fmt.Errorf("%s: syntax: empty block is not allowed", leftBracePos)
 				}
-				return cmds, nil
+				return directives, nil
 			}
 
-			cmd, err := p.parseDirective(nesting)
+			d, err := p.parseDirective(nesting)
 			if err != nil {
 				return nil, err
 			}
-			cmds = append(cmds, cmd)
+			directives = append(directives, d)
 
 		default:
 			return nil, fmt.Errorf("%s: syntax: unexpected token %q", tok.Position, tok.Text)

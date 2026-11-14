@@ -23,68 +23,68 @@ type Slot struct {
 	TemplateParam     int   // 使用第几个 tmpl 参数填写
 }
 
-// 递归遍历每一个 cmds 的 SubDirectives
+// 递归遍历每一个 directives 的 SubDirectives
 // 如果 cmd.Name = "tmpl" 则尝试替换
 // tmpl command 的第一个参数，用作 tmpl 查询名字，如果没有查到，则直接报错
 // 查到 template 则调用 render 获取用以替换 []Directive
 // 如果没有错误，则就地删除 tmpl command 就地插入 []Directive
 //
-// expandTemplates 就地替换 cmds 中的 tmpl 调用。
-// 注意：它可能改写 cmds 的底层数组，**调用方必须使用返回值**，不能依赖入参保持不变。
-func expandTemplates(cmds []Directive, templates Templates) ([]Directive, error) {
-	for i := 0; i < len(cmds); i++ {
-		cmd := &cmds[i]
+// expandTemplates 就地替换 directives 中的 tmpl 调用。
+// 注意：它可能改写 directives 的底层数组，**调用方必须使用返回值**，不能依赖入参保持不变。
+func expandTemplates(directives []Directive, templates Templates) ([]Directive, error) {
+	for i := 0; i < len(directives); i++ {
+		d := &directives[i]
 
-		if cmd.Name == "tmpl" {
-			if len(cmd.Parameters) == 0 {
+		if d.Name == "tmpl" {
+			if len(d.Parameters) == 0 {
 				return nil, fmt.Errorf(
 					"%s: syntax: tmpl requires a template name",
-					cmd.Position,
+					d.Position,
 				)
 			}
-			if cmd.HasSubDirectives() {
+			if d.HasSubDirectives() {
 				return nil, fmt.Errorf(
 					"%s: syntax: tmpl directive cannot have a block",
-					cmd.Position,
+					d.Position,
 				)
 			}
 
-			name := cmd.Parameters[0]
+			name := d.Parameters[0]
 			tmpl, ok := templates[name]
 			if !ok {
 				return nil, fmt.Errorf(
 					"%s: syntax: template %q not found in this file",
-					cmd.Position,
+					d.Position,
 					name,
 				)
 			}
 
-			rendered, err := tmpl.render(cmd.Parameters[1:], Origin{
-				TmplPosition: cmd.Position,
+			rendered, err := tmpl.render(d.Parameters[1:], Origin{
+				TmplPosition: d.Position,
 				TemplateName: name,
 			})
 			if err != nil {
-				return nil, fmt.Errorf("%s: syntax: %w", cmd.Position, err)
+				return nil, fmt.Errorf("%s: syntax: %w", d.Position, err)
 			}
 
-			cmds = append(cmds[:i], append(rendered, cmds[i+1:]...)...)
+			directives = append(directives[:i], append(rendered, directives[i+1:]...)...)
 			i += len(rendered) - 1
 			continue
 		}
 
-		subCommands, err := expandTemplates(cmd.SubDirectives, templates)
+		subCommands, err := expandTemplates(d.SubDirectives, templates)
 		if err != nil {
 			return nil, err
 		}
-		cmd.SubDirectives = subCommands
+		d.SubDirectives = subCommands
 	}
 
-	return cmds, nil
+	return directives, nil
 }
 
-func extractTemplates(cmds []Directive) (Templates, []Directive, error) {
+func extractTemplates(directives []Directive) (Templates, []Directive, error) {
 	templates := make(Templates)
-	commands := make([]Directive, 0, len(cmds))
+	commands := make([]Directive, 0, len(directives))
 
 	extractDirectiveName := func(s string) string {
 		if s[0] != '(' || s[len(s)-1] != ')' {
@@ -93,24 +93,24 @@ func extractTemplates(cmds []Directive) (Templates, []Directive, error) {
 		return s[1 : len(s)-1]
 	}
 
-	for _, cmd := range cmds {
-		name := extractDirectiveName(cmd.Name)
+	for _, d := range directives {
+		name := extractDirectiveName(d.Name)
 		if name == "" {
-			commands = append(commands, cmd)
+			commands = append(commands, d)
 			continue
 		}
 
-		if len(cmd.Parameters) > 0 {
+		if len(d.Parameters) > 0 {
 			return nil, nil, fmt.Errorf(
 				"%s: syntax: template definition cannot have parameters",
-				cmd.Position,
+				d.Position,
 			)
 		}
 
-		if len(cmd.SubDirectives) == 0 {
+		if len(d.SubDirectives) == 0 {
 			return nil, nil, fmt.Errorf(
 				"%s: syntax: template %s requires a block",
-				cmd.Position,
+				d.Position,
 				name,
 			)
 		}
@@ -118,19 +118,19 @@ func extractTemplates(cmds []Directive) (Templates, []Directive, error) {
 		if _, exists := templates[name]; exists {
 			return nil, nil, fmt.Errorf(
 				"%s: syntax: duplicate template: %s",
-				cmd.Position,
+				d.Position,
 				name,
 			)
 		}
 
-		slots, arity, err := analyzeTemplateBody(cmd.SubDirectives, cmd.Position)
+		slots, arity, err := analyzeTemplateBody(d.SubDirectives, d.Position)
 		if err != nil {
 			return nil, nil, err
 		}
 
 		templates[name] = &Template{
 			Name:  name,
-			Body:  cmd.SubDirectives,
+			Body:  d.SubDirectives,
 			Arity: arity,
 			Slots: slots,
 		}
@@ -139,31 +139,31 @@ func extractTemplates(cmds []Directive) (Templates, []Directive, error) {
 	return templates, commands, nil
 }
 
-func analyzeTemplateBody(cmds []Directive, pos Position) ([]Slot, int, error) {
+func analyzeTemplateBody(directives []Directive, pos Position) ([]Slot, int, error) {
 	var slots []Slot
 	maxParam := -1
 
 	var walk func([]Directive, []int) error
 
-	walk = func(cmds []Directive, path []int) error {
-		for i, cmd := range cmds {
+	walk = func(directives []Directive, path []int) error {
+		for i, d := range directives {
 			cmdPath := appendPath(path, i)
 
 			// TmplBlockCommandDirective must be a normal directive.
-			if isTemplateDirectiveName(cmd.Name) {
+			if isTemplateDirectiveName(d.Name) {
 				return fmt.Errorf(
 					"%s: template definition %s is not allowed in a template body",
-					cmd.Position,
-					cmd.Name,
+					d.Position,
+					d.Name,
 				)
 			}
 
-			for argIndex, arg := range cmd.Parameters {
+			for argIndex, arg := range d.Parameters {
 				param, ok, err := parseTemplateArg(arg)
 				if err != nil {
 					return fmt.Errorf(
 						"%s: syntax: %w",
-						cmd.Position,
+						d.Position,
 						err,
 					)
 				}
@@ -182,7 +182,7 @@ func analyzeTemplateBody(cmds []Directive, pos Position) ([]Slot, int, error) {
 				}
 			}
 
-			if err := walk(cmd.SubDirectives, cmdPath); err != nil {
+			if err := walk(d.SubDirectives, cmdPath); err != nil {
 				return err
 			}
 		}
@@ -190,7 +190,7 @@ func analyzeTemplateBody(cmds []Directive, pos Position) ([]Slot, int, error) {
 		return nil
 	}
 
-	if err := walk(cmds, nil); err != nil {
+	if err := walk(directives, nil); err != nil {
 		return nil, 0, err
 	}
 
@@ -293,18 +293,18 @@ func (t *Template) render(args []string, origin Origin) ([]Directive, error) {
 			)
 		}
 
-		cmd := &body[slot.LocationPath[0]]
+		d := &body[slot.LocationPath[0]]
 		for _, i := range slot.LocationPath[1:] {
-			if i < 0 || i >= len(cmd.SubDirectives) {
+			if i < 0 || i >= len(d.SubDirectives) {
 				return nil, fmt.Errorf(
 					"template %q: invalid slot path",
 					t.Name,
 				)
 			}
-			cmd = &cmd.SubDirectives[i]
+			d = &d.SubDirectives[i]
 		}
 
-		if slot.LocationParameter < 0 || slot.LocationParameter >= len(cmd.Parameters) {
+		if slot.LocationParameter < 0 || slot.LocationParameter >= len(d.Parameters) {
 			return nil, fmt.Errorf(
 				"template %q: slot parameter index out of range",
 				t.Name,
@@ -318,7 +318,7 @@ func (t *Template) render(args []string, origin Origin) ([]Directive, error) {
 			)
 		}
 
-		cmd.Parameters[slot.LocationParameter] = args[slot.TemplateParam]
+		d.Parameters[slot.LocationParameter] = args[slot.TemplateParam]
 	}
 
 	return body, nil
