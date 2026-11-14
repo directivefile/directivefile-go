@@ -141,11 +141,11 @@ func (p *parser) parseDirective(nesting int) (Directive, error) {
 				// Additional blank lines are allowed.
 				p.skipNewLines()
 
-				subCommands, err := p.parseSubDirectives(nesting+1, leftBracePos)
+				subDirectives, err := p.parseSubDirectives(nesting+1, leftBracePos)
 				if err != nil {
 					return d, err
 				}
-				d.SubDirectives = subCommands
+				d.SubDirectives = subDirectives
 
 				// Next tok must be UnquotedToken and tok.Text = "}"
 				tok, index = p.nextToken()
@@ -175,20 +175,20 @@ func (p *parser) parseDirective(nesting int) (Directive, error) {
 
 			default:
 				p.nextToken()
-				arg, err := resolveArg(tok)
+				param, err := resolveParameter(tok)
 				if err != nil {
 					return d, err
 				}
-				d.Parameters = append(d.Parameters, arg)
+				d.Parameters = append(d.Parameters, param)
 			}
 
 		case DoubleQuotedToken, BacktickQuotedToken:
 			p.nextToken()
-			arg, err := resolveArg(tok)
+			param, err := resolveParameter(tok)
 			if err != nil {
 				return d, err
 			}
-			d.Parameters = append(d.Parameters, arg)
+			d.Parameters = append(d.Parameters, param)
 
 		case NewLine:
 			p.nextToken()
@@ -239,8 +239,8 @@ func (p *parser) parseSubDirectives(nesting int, leftBracePos Position) ([]Direc
 	}
 }
 
-func resolveArg(tok Token) (string, error) {
-	envName, err := validateEnvReference(tok.Text)
+func resolveParameter(tok Token) (string, error) {
+	envName, err := parseEnvReference(tok.Text)
 	if err != nil {
 		return tok.Text, nil
 	}
