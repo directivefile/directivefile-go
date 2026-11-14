@@ -27,43 +27,43 @@ type Origin struct {
 	ImportChain    []string
 }
 
-// HasSubDirectives reports whether the command has a nested command block ({ ... }).
-func (cmd Directive) HasSubDirectives() bool {
-	return len(cmd.SubDirectives) > 0
+// HasSubDirectives reports whether the directive opens a block ({ ... }).
+func (d Directive) HasSubDirectives() bool {
+	return len(d.SubDirectives) > 0
 }
 
-func (cmd Directive) Source() string {
+func (d Directive) Source() string {
 	var b strings.Builder
 
-	if cmd.Origin.ImportPosition.IsValid() {
+	if d.Origin.ImportPosition.IsValid() {
 		b.WriteString("imported at ")
-		b.WriteString(cmd.Origin.ImportPosition.String())
+		b.WriteString(d.Origin.ImportPosition.String())
 
-		if len(cmd.Origin.ImportChain) > 0 {
+		if len(d.Origin.ImportChain) > 0 {
 			b.WriteString(" (")
-			b.WriteString(strings.Join(cmd.Origin.ImportChain, " -> "))
+			b.WriteString(strings.Join(d.Origin.ImportChain, " -> "))
 			b.WriteString(")")
 		}
 
-		if cmd.Origin.TmplPosition.IsValid() {
+		if d.Origin.TmplPosition.IsValid() {
 			b.WriteString("; instantiated from template ")
-			b.WriteString(strconv.Quote(cmd.Origin.TemplateName))
+			b.WriteString(strconv.Quote(d.Origin.TemplateName))
 			b.WriteString(" at ")
-			b.WriteString(cmd.Origin.TmplPosition.String())
+			b.WriteString(d.Origin.TmplPosition.String())
 		}
 
 		return b.String()
 	}
 
-	if cmd.Origin.TmplPosition.IsValid() {
+	if d.Origin.TmplPosition.IsValid() {
 		return fmt.Sprintf(
 			"instantiated from template %s at %s",
-			strconv.Quote(cmd.Origin.TemplateName),
-			cmd.Origin.TmplPosition,
+			strconv.Quote(d.Origin.TemplateName),
+			d.Origin.TmplPosition,
 		)
 	}
 
-	return cmd.Position.String()
+	return d.Position.String()
 }
 
 // maxDirectiveDepth is the maximum number of nested command levels.
