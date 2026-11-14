@@ -81,10 +81,10 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 			// {args[0]} appears twice in "forward", and the body keeps BOTH:
 			// Param 0 is a parameter, not a slot identity.
 			Slots: []Slot{
-				{Path: []int{0}, Arg: 0, Param: 0},
-				{Path: []int{0}, Arg: 1, Param: 1},
-				{Path: []int{0}, Arg: 2, Param: 0},
-				{Path: []int{1}, Arg: 0, Param: 1},
+				{LocationPath: []int{0}, LocationParameter: 0, TemplateParam: 0},
+				{LocationPath: []int{0}, LocationParameter: 1, TemplateParam: 1},
+				{LocationPath: []int{0}, LocationParameter: 2, TemplateParam: 0},
+				{LocationPath: []int{1}, LocationParameter: 0, TemplateParam: 1},
 			},
 		}
 		if !reflect.DeepEqual(tmpl, want) {
@@ -105,7 +105,7 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 			t.Fatalf("templates = %d entries, want 2", len(templates))
 		}
 
-		// A placeholder one level down must carry a two-element Path: the
+		// A placeholder one level down must carry a two-element LocationPath: the
 		// distinction between a body index and an arg index is the whole point
 		// of Slot.Path, and getting it wrong only shows up when nesting.
 		wantSite := &Template{
@@ -131,9 +131,9 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 				},
 			},
 			Slots: []Slot{
-				{Path: []int{0, 0}, Arg: 0, Param: 0},
-				{Path: []int{0, 1}, Arg: 0, Param: 1},
-				{Path: []int{0, 1}, Arg: 1, Param: 0},
+				{LocationPath: []int{0, 0}, LocationParameter: 0, TemplateParam: 0},
+				{LocationPath: []int{0, 1}, LocationParameter: 0, TemplateParam: 1},
+				{LocationPath: []int{0, 1}, LocationParameter: 1, TemplateParam: 0},
 			},
 		}
 		if got := templates["site"]; !reflect.DeepEqual(got, wantSite) {
@@ -235,7 +235,7 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 				},
 			},
 			Slots: []Slot{
-				{Path: []int{0}, Arg: 0, Param: 0},
+				{LocationPath: []int{0}, LocationParameter: 0, TemplateParam: 0},
 			},
 		}
 
@@ -283,9 +283,9 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 				},
 			},
 			Slots: []Slot{
-				{Path: []int{0, 0}, Arg: 0, Param: 0},
-				{Path: []int{0, 1}, Arg: 0, Param: 1},
-				{Path: []int{0, 1}, Arg: 1, Param: 0},
+				{LocationPath: []int{0, 0}, LocationParameter: 0, TemplateParam: 0},
+				{LocationPath: []int{0, 1}, LocationParameter: 0, TemplateParam: 1},
+				{LocationPath: []int{0, 1}, LocationParameter: 1, TemplateParam: 0},
 			},
 		}
 
