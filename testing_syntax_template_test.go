@@ -67,7 +67,7 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 		want := &Template{
 			Name:  "proxy",
 			Arity: 2,
-			Body: []Directive{
+			SubDirectives: []Directive{
 				{
 					Name:       "forward",
 					Parameters: []string{"{args[0]}", "{args[1]}", "{args[0]}"},
@@ -82,10 +82,10 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 			// {args[0]} appears twice in "forward", and the body keeps BOTH:
 			// Param 0 is a parameter, not a slot identity.
 			Slots: []Slot{
-				{LocationPath: []int{0}, LocationParameter: 0, TemplateParam: 0},
-				{LocationPath: []int{0}, LocationParameter: 1, TemplateParam: 1},
-				{LocationPath: []int{0}, LocationParameter: 2, TemplateParam: 0},
-				{LocationPath: []int{1}, LocationParameter: 0, TemplateParam: 1},
+				{Location: SlotLocation{Path: []int{0}, ParamIdx: 0}, TemplateParam: 0},
+				{Location: SlotLocation{Path: []int{0}, ParamIdx: 1}, TemplateParam: 1},
+				{Location: SlotLocation{Path: []int{0}, ParamIdx: 2}, TemplateParam: 0},
+				{Location: SlotLocation{Path: []int{1}, ParamIdx: 0}, TemplateParam: 1},
 			},
 		}
 		if !reflect.DeepEqual(tmpl, want) {
@@ -106,13 +106,13 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 			t.Fatalf("templates = %d entries, want 2", len(templates))
 		}
 
-		// A placeholder one level down must carry a two-element LocationPath: the
+		// A placeholder one level down must carry a two-element Location.Path: the
 		// distinction between a body index and an arg index is the whole point
 		// of Slot.Path, and getting it wrong only shows up when nesting.
 		wantSite := &Template{
 			Name:  "site",
 			Arity: 2,
-			Body: []Directive{
+			SubDirectives: []Directive{
 				{
 					Name:       "route",
 					Parameters: []string{"/api"},
@@ -132,9 +132,9 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 				},
 			},
 			Slots: []Slot{
-				{LocationPath: []int{0, 0}, LocationParameter: 0, TemplateParam: 0},
-				{LocationPath: []int{0, 1}, LocationParameter: 0, TemplateParam: 1},
-				{LocationPath: []int{0, 1}, LocationParameter: 1, TemplateParam: 0},
+				{Location: SlotLocation{Path: []int{0, 0}, ParamIdx: 0}, TemplateParam: 0},
+				{Location: SlotLocation{Path: []int{0, 1}, ParamIdx: 0}, TemplateParam: 1},
+				{Location: SlotLocation{Path: []int{0, 1}, ParamIdx: 1}, TemplateParam: 0},
 			},
 		}
 		if got := templates["site"]; !reflect.DeepEqual(got, wantSite) {
@@ -145,7 +145,7 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 		wantNoParameters := &Template{
 			Name:  "no-args",
 			Arity: 0,
-			Body: []Directive{
+			SubDirectives: []Directive{
 				{
 					Name:     "logging",
 					Position: Position{Filename: path, Line: 9, Column: 5},
@@ -234,14 +234,14 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 		template := Template{
 			Name:  "tmpl_1",
 			Arity: 1,
-			Body: []Directive{
+			SubDirectives: []Directive{
 				{
 					Name:       "cmd",
 					Parameters: []string{"{args[0]}"},
 				},
 			},
 			Slots: []Slot{
-				{LocationPath: []int{0}, LocationParameter: 0, TemplateParam: 0},
+				{Location: SlotLocation{Path: []int{0}, ParamIdx: 0}, TemplateParam: 0},
 			},
 		}
 
@@ -272,7 +272,7 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 		template := Template{
 			Name:  "proxy",
 			Arity: 2,
-			Body: []Directive{
+			SubDirectives: []Directive{
 				{
 					Name:       "proxy",
 					Parameters: []string{"http"},
@@ -289,9 +289,9 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 				},
 			},
 			Slots: []Slot{
-				{LocationPath: []int{0, 0}, LocationParameter: 0, TemplateParam: 0},
-				{LocationPath: []int{0, 1}, LocationParameter: 0, TemplateParam: 1},
-				{LocationPath: []int{0, 1}, LocationParameter: 1, TemplateParam: 0},
+				{Location: SlotLocation{Path: []int{0, 0}, ParamIdx: 0}, TemplateParam: 0},
+				{Location: SlotLocation{Path: []int{0, 1}, ParamIdx: 0}, TemplateParam: 1},
+				{Location: SlotLocation{Path: []int{0, 1}, ParamIdx: 1}, TemplateParam: 0},
 			},
 		}
 

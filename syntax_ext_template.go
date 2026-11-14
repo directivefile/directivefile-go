@@ -6,8 +6,8 @@ import "fmt"
 type Templates map[string]*Template
 
 type Template struct {
-	Name string      // 模板名：`(name)` 去掉括号后的部分
-	Body []Directive // 模板体；展开时逐条克隆，再按 Slots 填参
+	Name          string      // 模板名：`(name)` 去掉括号后的部分
+	SubDirectives []Directive // 模板体；展开时逐条克隆，再按 Slots 填参
 	// Arity = max(TemplateParam) + 1，不是 len(Slots)：同一个占位符编号允许在体内出现多次。
 	Arity int
 	Slots []Slot // 体内每个占位符的绑定：写到哪个位置、用第几个参数填
@@ -16,11 +16,16 @@ type Template struct {
 const maxTemplateArity = 32
 
 // Slot 标记体内一个真正的占位符位置。命令用「索引路径」定位，
-// 因为 Body 是值切片，保存 *Directive 会随切片复制而失效。
+// 因为 SubDirectives 是值切片，保存 *Directive 会随切片复制而失效。
 type Slot struct {
-	LocationPath      []int // 从 Body 根逐层的 SubDirectives 下标
-	LocationParameter int   // 模板内命令的第几个 Arg，不是 tmpl 调用的第几个参数
-	TemplateParam     int   // 使用第几个 tmpl 参数填写
+	Location      SlotLocation // 写到哪
+	TemplateParam int          // 用第几个 tmpl 参数填（数据来源）
+}
+
+// SlotLocation 是占位符的落点：沿 SubDirectives 逐层下探到某条命令，再定位到它的某个参数。
+type SlotLocation struct {
+	Path     []int // 从 SubDirectives 根逐层的下标
+	ParamIdx int   // 该命令的第几个参数，不是 tmpl 调用的第几个实参
 }
 
 // 递归遍历每一个 directives 的 SubDirectives
@@ -129,10 +134,10 @@ func extractTemplates(directives []Directive) (Templates, []Directive, error) {
 		}
 
 		templates[name] = &Template{
-			Name:  name,
-			Body:  d.SubDirectives,
-			Arity: arity,
-			Slots: slots,
+			Name:          name,
+			SubDirectives: d.SubDirectives,
+			Arity:         arity,
+			Slots:         slots,
 		}
 	}
 
@@ -172,9 +177,11 @@ func analyzeTemplateBody(directives []Directive, pos Position) ([]Slot, int, err
 				}
 
 				slots = append(slots, Slot{
-					LocationPath:      cmdPath,
-					LocationParameter: paramIdx,
-					TemplateParam:     param,
+					Location: SlotLocation{
+						Path:     cmdPath,
+						ParamIdx: paramIdx,
+					},
+					TemplateParam: param,
 				})
 
 				if param > maxParam {
@@ -280,31 +287,31 @@ func (t *Template) render(args []string, origin Origin) ([]Directive, error) {
 		)
 	}
 
-	body := make([]Directive, len(t.Body))
-	for i := range t.Body {
-		body[i] = cloneDirective(t.Body[i], origin)
+	expanded := make([]Directive, len(t.SubDirectives))
+	for i := range t.SubDirectives {
+		expanded[i] = cloneDirective(t.SubDirectives[i], origin)
 	}
 
 	for _, slot := range t.Slots {
-		if len(slot.LocationPath) == 0 || slot.LocationPath[0] < 0 || slot.LocationPath[0] >= len(body) {
+		if len(slot.Location.Path) == 0 || slot.Location.Path[0] < 0 || slot.Location.Path[0] >= len(expanded) {
 			return nil, fmt.Errorf(
 				"template %q: invalid slot path",
 				t.Name,
 			)
 		}
 
-		d := &body[slot.LocationPath[0]]
-		for _, i := range slot.LocationPath[1:] {
+		d := &expanded[slot.Location.Path[0]]
+		for _, i := range slot.Location.Path[1:] {
 			if i < 0 || i >= len(d.SubDirectives) {
 				return nil, fmt.Errorf(
 					"template %q: invalid slot path",
 					t.Name,
 				)
 			}
-			d = &d.SubDirectives[i]
+			d = &d.SubDirectives[i] // lookup directive by path
 		}
 
-		if slot.LocationParameter < 0 || slot.LocationParameter >= len(d.Parameters) {
+		if slot.Location.ParamIdx < 0 || slot.Location.ParamIdx >= len(d.Parameters) {
 			return nil, fmt.Errorf(
 				"template %q: slot parameter index out of range",
 				t.Name,
@@ -318,10 +325,10 @@ func (t *Template) render(args []string, origin Origin) ([]Directive, error) {
 			)
 		}
 
-		d.Parameters[slot.LocationParameter] = args[slot.TemplateParam]
+		d.Parameters[slot.Location.ParamIdx] = args[slot.TemplateParam]
 	}
 
-	return body, nil
+	return expanded, nil
 }
 
 func cloneDirective(src Directive, origin Origin) Directive {
