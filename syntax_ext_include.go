@@ -5,6 +5,36 @@ import (
 	"strings"
 )
 
+// findRecursiveFlag returns the index of "-r" in params.
+// It returns -1 when "-r" is absent, and an error when it appears more than once
+// or sits in a structurally illegal position.
+//
+// A legal index is 0, 1, or len(params)-1:
+//   - 0:        "-r" is first
+//   - 1:        config folder path before "-r"
+//   - len-1:    "-r" is the last parameter.
+func findRecursiveFlag(params []string) (int, error) {
+	index := -1
+	count := 0
+	for i, p := range params {
+		if p != "-r" {
+			continue
+		}
+		count++
+		if count > 1 {
+			return -1, fmt.Errorf(`"-r" may appear only once`)
+		}
+		index = i
+	}
+
+	if index > 0 && index != 1 && index != len(params)-1 {
+		return -1, fmt.Errorf(
+			`"-r" must be right before or after config folder path, or the last parameter`)
+	}
+
+	return index, nil
+}
+
 func extractFileNameExtensions(filters []string) ([]string, error) {
 	seen := make(map[string]struct{}, len(filters))
 	out := make([]string, 0, len(filters))
