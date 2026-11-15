@@ -263,7 +263,7 @@ func validateDirectiveName(s string) bool {
 		return len(s) >= 3 && s[len(s)-1] == ')'
 	}
 
-	for _, segment := range strings.Split(s, ".") {
+	for segment := range strings.SplitSeq(s, ".") {
 		if !isDirectiveSegment(segment) {
 			return false
 		}
