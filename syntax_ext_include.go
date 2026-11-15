@@ -9,6 +9,74 @@ import (
 	"strings"
 )
 
+type includeOptions struct {
+	ConfigFolderPath string
+	Recursive        bool
+	Filter           filterMode
+	Filters          []string
+}
+
+type filterMode uint8
+
+const (
+	filterDefault filterMode = iota
+	filterListed
+	filterAll
+)
+
+func parseIncludeParams(params []string, mainDir string) (includeOptions, error) {
+	if len(params) == 0 {
+		return includeOptions{}, fmt.Errorf("missing config folder path")
+	}
+
+	var opts includeOptions
+	cleanParams := params
+
+	if rIndex, err := findRecursiveFlag(params); err != nil {
+		return includeOptions{}, err
+	} else if rIndex >= 0 {
+		opts.Recursive = true
+		cleanParams = make([]string, 0, len(params)-1)
+		cleanParams = append(cleanParams, params[:rIndex]...)
+		cleanParams = append(cleanParams, params[rIndex+1:]...)
+	}
+
+	if len(cleanParams) == 0 {
+		return includeOptions{}, fmt.Errorf("missing config folder path")
+	}
+
+	configFolderPath, err := extractConfigFolderPath(cleanParams[0], mainDir)
+	if err != nil {
+		return includeOptions{}, err
+	}
+	opts.ConfigFolderPath = configFolderPath
+
+	includeAll := false
+	var rawFilters []string
+	for _, p := range cleanParams[1:] {
+		if p == "*" {
+			includeAll = true
+		} else {
+			rawFilters = append(rawFilters, p)
+		}
+	}
+
+	filters, err := extractFileNameExtensions(rawFilters)
+	if err != nil {
+		return includeOptions{}, err
+	}
+	opts.Filters = filters
+
+	switch {
+	case includeAll:
+		opts.Filter = filterAll
+	case len(opts.Filters) > 0:
+		opts.Filter = filterListed
+	}
+
+	return opts, nil
+}
+
 // findRecursiveFlag returns the index of "-r" in params.
 // It returns -1 when "-r" is absent, and an error when it appears more than once
 // or sits in a structurally illegal position.
