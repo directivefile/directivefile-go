@@ -253,53 +253,33 @@ func resolveParameter(tok Token) (string, error) {
 	return value, nil
 }
 
-// validateDirectiveName reports whether s may name a directive.
-func validateDirectiveName(s string) bool {
-	if len(s) == 0 {
+func validateDirectiveName(name string) bool {
+	if name == "" {
 		return false
 	}
-
-	if s[0] == '(' {
-		return len(s) >= 3 && s[len(s)-1] == ')'
-	}
-
-	for segment := range strings.SplitSeq(s, ".") {
-		if !isDirectiveSegment(segment) {
+	for _, r := range name {
+		if !isDirectiveNameRune(r) {
 			return false
 		}
 	}
-
 	return true
 }
 
-// isDirectiveSegment reports whether s is one dot-separated part of a directive
-// name: a leading letter, then letters, digits, `_` and `-`. The leading letter
-// is what separates a namespace from a name — `dns.2x` is rejected while
-// `dns.srv2` is not.
+// isDirectiveNameRune reports whether r may appear in a directive name.
 //
-// Deprecated: 这条规则在 spec_cn.md 的新码表下已不存在——
-// 码表放宽为 [^\x00-\x20\x7F-\x{10FFFF}{}"`#]+ 之后，`dns.2x`、`.dns`、`dns..x`
-// 都是合法的 directive name。本函数与 validateDirectiveName 里的按段循环都会被移除。
+// r must match:
 //
-// TODO: 码表落地时删除本函数，并把 validateDirectiveName 改成按码表逐 rune 校验。
-func isDirectiveSegment(s string) bool {
-	if len(s) == 0 {
+//	[^\x00-\x20\x7F-\x{10FFFF}{}"`#]
+//
+// A printable ASCII character excluding {, }, ", `, and #.
+func isDirectiveNameRune(r rune) bool {
+	if r <= 0x20 || r >= 0x7F {
 		return false
 	}
 
-	if !(('a' <= s[0] && s[0] <= 'z') ||
-		('A' <= s[0] && s[0] <= 'Z')) {
+	switch r {
+	case LBRACE, RBRACE, DoubleQuote, BacktickQuote, HashTag:
 		return false
-	}
-
-	for i := 1; i < len(s); i++ {
-		c := s[i]
-		if !(('a' <= c && c <= 'z') ||
-			('A' <= c && c <= 'Z') ||
-			('0' <= c && c <= '9') ||
-			c == '_' || c == '-') {
-			return false
-		}
 	}
 
 	return true
