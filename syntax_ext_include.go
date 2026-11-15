@@ -1,7 +1,11 @@
 package directivefile
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -33,6 +37,38 @@ func findRecursiveFlag(params []string) (int, error) {
 	}
 
 	return index, nil
+}
+
+func extractConfigFolderPath(path, mainDir string) (string, error) {
+	if path == "" {
+		return "", fmt.Errorf("missing config folder path")
+	}
+	if path == "*" {
+		return "", fmt.Errorf(
+			`"*" is reserved for "all files" and cannot be used as a config folder path`)
+	}
+	if filepath.IsAbs(path) {
+		return "", fmt.Errorf(
+			"config folder path %q must be relative to %q", path, mainDir)
+	}
+
+	cleaned := filepath.Clean(path)
+	target := filepath.Join(mainDir, cleaned)
+
+	info, err := os.Stat(target)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return "", fmt.Errorf(
+				"config folder path %q does not exist (resolved to %q)", path, target)
+		}
+		return "", fmt.Errorf("config folder path %q: %w", target, err)
+	}
+	if !info.IsDir() {
+		return "", fmt.Errorf(
+			"config folder path %q is not a directory (resolved to %q)", path, target)
+	}
+
+	return target, nil
 }
 
 func extractFileNameExtensions(filters []string) ([]string, error) {
