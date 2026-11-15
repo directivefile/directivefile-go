@@ -183,3 +183,53 @@ func validateFileNameExtension(extension string) error {
 
 	return nil
 }
+
+func collectIncludeFiles(opts includeOptions) ([]string, error) {
+	dir := opts.ConfigFolderPath
+
+	suffixes := make(map[string]struct{}, len(opts.Filters))
+	for _, f := range opts.Filters {
+		suffixes[f] = struct{}{}
+	}
+
+	var out []string
+	err := filepath.WalkDir(dir, func(p string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+
+		if d.IsDir() {
+			// Folder paths have no extension: directories are never filtered.
+			switch {
+			case filepath.Clean(p) == filepath.Clean(dir):
+				return nil // the config folder is always scanned
+			case opts.Recursive:
+				return nil // -r: keep descending
+			default:
+				return filepath.SkipDir // no -r: top level only
+			}
+		}
+
+		switch opts.Filter {
+		case filterAll:
+			// every file, whatever its name or extension
+		case filterListed:
+			if _, ok := suffixes[filepath.Ext(d.Name())]; !ok {
+				return nil
+			}
+		default: // filterDefault
+			name := d.Name()
+			ext := filepath.Ext(name)
+			if strings.HasPrefix(name, ".") || (ext != "" && ext != ".df") {
+				return nil
+			}
+		}
+
+		out = append(out, p)
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("scan %q: %w", opts.ConfigFolderPath, err)
+	}
+	return out, nil
+}
