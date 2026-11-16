@@ -24,7 +24,7 @@ const (
 	filterAll
 )
 
-func parseIncludeParams(params []string, mainDir string) (includeOptions, error) {
+func parseIncludeParams(params []string, currentDir string) (includeOptions, error) {
 	if len(params) == 0 {
 		return includeOptions{}, fmt.Errorf("missing config folder path")
 	}
@@ -45,7 +45,7 @@ func parseIncludeParams(params []string, mainDir string) (includeOptions, error)
 		return includeOptions{}, fmt.Errorf("missing config folder path")
 	}
 
-	configFolderPath, err := extractConfigFolderPath(cleanParams[0], mainDir)
+	configFolderPath, err := extractConfigFolderPath(cleanParams[0], currentDir)
 	if err != nil {
 		return includeOptions{}, err
 	}
@@ -107,7 +107,7 @@ func findRecursiveFlag(params []string) (int, error) {
 	return index, nil
 }
 
-func extractConfigFolderPath(path, mainDir string) (string, error) {
+func extractConfigFolderPath(path, currentDir string) (string, error) {
 	if path == "" {
 		return "", fmt.Errorf("missing config folder path")
 	}
@@ -117,11 +117,11 @@ func extractConfigFolderPath(path, mainDir string) (string, error) {
 	}
 	if filepath.IsAbs(path) {
 		return "", fmt.Errorf(
-			"config folder path %q must be relative to %q", path, mainDir)
+			"config folder path %q must be relative to %q", path, currentDir)
 	}
 
 	cleaned := filepath.Clean(path)
-	target := filepath.Join(mainDir, cleaned)
+	target := filepath.Join(currentDir, cleaned)
 
 	info, err := os.Stat(target)
 	if err != nil {
@@ -230,6 +230,43 @@ func collectIncludeFiles(opts includeOptions) ([]string, error) {
 	})
 	if err != nil {
 		return nil, fmt.Errorf("scan %q: %w", opts.ConfigFolderPath, err)
+	}
+	return out, nil
+}
+
+// toImportParams turns the scanned absolute paths into import parameters for
+// the file that holds the include directive. include and import share the same
+// base — the directory of that file — and the file itself is dropped so that
+// "include . -r" cannot re-import it.
+func toImportParams(currentFilePath string, files []string) ([]string, error) {
+	base, err := filepath.Abs(filepath.Dir(currentFilePath))
+	if err != nil {
+		return nil, fmt.Errorf("resolve current directory: %w", err)
+	}
+
+	self, err := filepath.Abs(currentFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("resolve current file: %w", err)
+	}
+	self = filepath.Clean(self)
+
+	out := make([]string, 0, len(files))
+	for _, f := range files {
+		abs, err := filepath.Abs(f)
+		if err != nil {
+			return nil, fmt.Errorf("resolve %q: %w", f, err)
+		}
+
+		abs = filepath.Clean(abs)
+		if abs == self {
+			continue
+		}
+
+		rel, err := filepath.Rel(base, abs)
+		if err != nil {
+			return nil, fmt.Errorf("make %q relative to %q: %w", abs, base, err)
+		}
+		out = append(out, rel)
 	}
 	return out, nil
 }
