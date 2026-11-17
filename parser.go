@@ -6,7 +6,9 @@ import (
 	"strings"
 )
 
-func parse(path string) (File, error) {
+// Parse reads the config file at path and returns its fully expanded
+// directives (templates, includes and imports are resolved).
+func Parse(path string) (File, error) {
 	return parseFile(path, Origin{})
 }
 
