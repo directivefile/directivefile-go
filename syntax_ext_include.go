@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+const maxIncludeDepth = 32
+
 type includeOptions struct {
 	ConfigFolderPath string
 	Recursive        bool
