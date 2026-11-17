@@ -60,9 +60,9 @@ func TestParseEnvGoodCases(t *testing.T) {
 		t.Run(tc.file, func(t *testing.T) {
 			path := envDir + tc.file
 
-			file, err := parse(path)
+			file, err := Parse(path)
 			if err != nil {
-				t.Fatalf("parse() error = %v", err)
+				t.Fatalf("Parse() error = %v", err)
 			}
 
 			want := File{Directives: []Directive{{
@@ -71,7 +71,7 @@ func TestParseEnvGoodCases(t *testing.T) {
 				Position:   Position{Filename: path, Line: tc.line, Column: 1},
 			}}}
 			if !reflect.DeepEqual(file, want) {
-				t.Fatalf("parse():\n got: %#v\nwant: %#v", file, want)
+				t.Fatalf("Parse():\n got: %#v\nwant: %#v", file, want)
 			}
 		})
 	}
@@ -88,7 +88,7 @@ func TestParseEnvBadCases(t *testing.T) {
 		// a position rule from a missing value.
 		t.Setenv("PROXY", "proxy")
 
-		_, err := parse(path)
+		_, err := Parse(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -106,7 +106,7 @@ func TestParseEnvBadCases(t *testing.T) {
 
 		unsetEnv(t, "DF_TEST_ENV_NOT_SET")
 
-		_, err := parse(path)
+		_, err := Parse(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -126,7 +126,7 @@ func TestParseEnvBadCases(t *testing.T) {
 		// the only observable difference between the two — so assert it.
 		t.Setenv("DF_TEST_ENV_EMPTY", "")
 
-		_, err := parse(path)
+		_, err := Parse(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}

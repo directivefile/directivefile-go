@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// TestParseFileGoodCases drives the file goodcases through parse() and asserts
+// TestParseFileGoodCases drives the file goodcases through Parse() and asserts
 // the whole tree, position included.
 //
 // 1-simple-block.conf and 2-nested-block.conf are driven by
@@ -16,9 +16,9 @@ func TestParseFileGoodCases(t *testing.T) {
 	t.Run("5-brace-in-quote.conf", func(t *testing.T) {
 		const path = "testsdata/syntax/file/goodcases/5-brace-in-quote.conf"
 
-		got, err := parse(path)
+		got, err := Parse(path)
 		if err != nil {
-			t.Fatalf("parse() error = %v", err)
+			t.Fatalf("Parse() error = %v", err)
 		}
 
 		// A brace is structural only when it is a token of its own, so a `{` or
@@ -47,7 +47,7 @@ func TestParseFileGoodCases(t *testing.T) {
 		}}}
 
 		if !reflect.DeepEqual(got, want) {
-			t.Fatalf("parse():\n got: %#v\nwant: %#v", got, want)
+			t.Fatalf("Parse():\n got: %#v\nwant: %#v", got, want)
 		}
 	})
 
@@ -57,9 +57,9 @@ func TestParseFileGoodCases(t *testing.T) {
 	t.Run("6-dotted-directive.conf", func(t *testing.T) {
 		const path = "testsdata/syntax/file/goodcases/6-dotted-directive.conf"
 
-		got, err := parse(path)
+		got, err := Parse(path)
 		if err != nil {
-			t.Fatalf("parse() error = %v", err)
+			t.Fatalf("Parse() error = %v", err)
 		}
 
 		want := File{Directives: []Directive{
@@ -88,12 +88,12 @@ func TestParseFileGoodCases(t *testing.T) {
 		}}
 
 		if !reflect.DeepEqual(got, want) {
-			t.Fatalf("parse():\n got: %#v\nwant: %#v", got, want)
+			t.Fatalf("Parse():\n got: %#v\nwant: %#v", got, want)
 		}
 	})
 }
 
-// TestParseFileBadCases drives every file badcase through parse().
+// TestParseFileBadCases drives every file badcase through Parse().
 //
 // The expected error is spelled out in full — message AND position — because
 // where an error is reported is part of the contract. The path prefix is part
@@ -110,7 +110,7 @@ func TestParseFileBadCases(t *testing.T) {
 	t.Run("1-block-open-next-line", func(t *testing.T) {
 		const path = "testsdata/syntax/file/badcases/1-block-open-next-line.conf"
 
-		_, err := parse(path)
+		_, err := Parse(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -127,7 +127,7 @@ func TestParseFileBadCases(t *testing.T) {
 	t.Run("2-block-open-same-line", func(t *testing.T) {
 		const path = "testsdata/syntax/file/badcases/2-block-open-same-line.conf"
 
-		_, err := parse(path)
+		_, err := Parse(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -143,7 +143,7 @@ func TestParseFileBadCases(t *testing.T) {
 	t.Run("3-empty-block", func(t *testing.T) {
 		const path = "testsdata/syntax/file/badcases/3-empty-block.conf"
 
-		_, err := parse(path)
+		_, err := Parse(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -159,7 +159,7 @@ func TestParseFileBadCases(t *testing.T) {
 	t.Run("4-brace-in-one-line-1", func(t *testing.T) {
 		const path = "testsdata/syntax/file/badcases/4-brace-in-one-line-1.conf"
 
-		_, err := parse(path)
+		_, err := Parse(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -175,7 +175,7 @@ func TestParseFileBadCases(t *testing.T) {
 	t.Run("5-brace-in-one-line-2", func(t *testing.T) {
 		const path = "testsdata/syntax/file/badcases/5-brace-in-one-line-2.conf"
 
-		_, err := parse(path)
+		_, err := Parse(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -194,7 +194,7 @@ func TestParseFileBadCases(t *testing.T) {
 	t.Run("6-command-nesting-too-deep", func(t *testing.T) {
 		const path = "testsdata/syntax/file/badcases/6-command-nesting-too-deep.conf"
 
-		_, err := parse(path)
+		_, err := Parse(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -211,7 +211,7 @@ func TestParseFileBadCases(t *testing.T) {
 	t.Run("7-dotted-directive-leading-dot", func(t *testing.T) {
 		const path = "testsdata/syntax/file/badcases/7-dotted-directive-leading-dot.conf"
 
-		_, err := parse(path)
+		_, err := Parse(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -228,7 +228,7 @@ func TestParseFileBadCases(t *testing.T) {
 	t.Run("8-dotted-directive-trailing-dot", func(t *testing.T) {
 		const path = "testsdata/syntax/file/badcases/8-dotted-directive-trailing-dot.conf"
 
-		_, err := parse(path)
+		_, err := Parse(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -243,7 +243,7 @@ func TestParseFileBadCases(t *testing.T) {
 	t.Run("9-dotted-directive-empty-segment", func(t *testing.T) {
 		const path = "testsdata/syntax/file/badcases/9-dotted-directive-empty-segment.conf"
 
-		_, err := parse(path)
+		_, err := Parse(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -260,7 +260,7 @@ func TestParseFileBadCases(t *testing.T) {
 	t.Run("10-dotted-directive-digit-segment", func(t *testing.T) {
 		const path = "testsdata/syntax/file/badcases/10-dotted-directive-digit-segment.conf"
 
-		_, err := parse(path)
+		_, err := Parse(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}

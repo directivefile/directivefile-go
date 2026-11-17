@@ -158,7 +158,7 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 	})
 }
 
-// TestExpandTemplatesBadCases drives every template badcase through parse().
+// TestExpandTemplatesBadCases drives every template badcase through Parse().
 // The expected error is spelled out in full — message AND position — because
 // WHERE a template error is reported is part of the contract: problems in the
 // definition are reported at the definition, problems in a call at the call.
@@ -208,7 +208,7 @@ func TestExpandTemplatesBadCases(t *testing.T) {
 		t.Run(tc.file, func(t *testing.T) {
 			path := dir + tc.file
 
-			_, err := parse(path)
+			_, err := Parse(path)
 			if err == nil {
 				t.Fatal("expected error, got nil")
 			}

@@ -12,9 +12,9 @@ func TestExpandImportsGoodCase(t *testing.T) {
 		const path = "testsdata/syntax/import/goodcases/1-import-block.conf"
 		const target = "testsdata/syntax/import/fixtures/block.conf"
 
-		file, err := parse(path)
+		file, err := Parse(path)
 		if err != nil {
-			t.Fatalf("parse() error = %v", err)
+			t.Fatalf("Parse() error = %v", err)
 		}
 
 		// Every directive that came from the imported file carries the same
@@ -63,7 +63,7 @@ func TestExpandImportsGoodCase(t *testing.T) {
 		}}
 
 		if !reflect.DeepEqual(file, want) {
-			t.Fatalf("parse():\n got: %#v\nwant: %#v", file, want)
+			t.Fatalf("Parse():\n got: %#v\nwant: %#v", file, want)
 		}
 	})
 }
@@ -73,7 +73,7 @@ func TestExpandImportBadCase(t *testing.T) {
 		const path = "testsdata/syntax/import/badcases/3-import-empty-file.conf"
 		const target = "testsdata/syntax/import/fixtures/empty.conf"
 
-		_, err := parse(path)
+		_, err := Parse(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -92,7 +92,7 @@ func TestExpandImportBadCase(t *testing.T) {
 		const path = "testsdata/syntax/import/badcases/4-import-defs-only-file.conf"
 		const target = "testsdata/syntax/import/fixtures/defs-only.conf"
 
-		_, err := parse(path)
+		_, err := Parse(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -112,7 +112,7 @@ func TestExpandImportsBadCaseCycleImport(t *testing.T) {
 	t.Run("import self", func(t *testing.T) {
 		const path = "testsdata/syntax/import/badcases/1-self-import.conf"
 
-		_, err := parse(path)
+		_, err := Parse(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -139,7 +139,7 @@ func TestExpandImportsBadCaseCycleImport(t *testing.T) {
 		const a = "testsdata/syntax/import/fixtures/cycle-a.conf"
 		const b = "testsdata/syntax/import/fixtures/cycle-b.conf"
 
-		_, err := parse(path)
+		_, err := Parse(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
