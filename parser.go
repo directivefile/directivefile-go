@@ -49,6 +49,12 @@ func parseFile(path string, origin Origin) (File, error) {
 		return File{}, err
 	}
 
+	// expand include
+	directives, err = expandIncludes(directives, path)
+	if err != nil {
+		return File{}, err
+	}
+
 	// expand import
 	directives, err = expandImports(directives, path, origin)
 	if err != nil {
@@ -79,6 +85,12 @@ func validateDirectives(directives []Directive, depth int, pos Position) error {
 	}
 	for _, d := range directives {
 		switch {
+		case d.Name == "include":
+			return fmt.Errorf(
+				"%s: internal error: expandIncludes left an include directive in the "+
+					"tree (please report this as a bug)",
+				d.Source(),
+			)
 		case d.Name == "import":
 			return fmt.Errorf(
 				"%s: internal error: expandImports left an import directive in the "+

@@ -11,6 +11,61 @@ import (
 
 const maxIncludeDepth = 32
 
+// expandIncludes replaces every include directive with the import directives
+// that the included files produce, in place. It mirrors expandImports: blocks
+// are walked recursively, the directive itself must not have a block, and the
+// generated imports are expanded by the next step (expandImports).
+func expandIncludes(directives []Directive, path string) ([]Directive, error) {
+	var result []Directive
+
+	for _, d := range directives {
+		if d.Name != "include" {
+			newSubDirectives, err := expandIncludes(d.SubDirectives, path)
+			if err != nil {
+				return nil, err
+			}
+			d.SubDirectives = newSubDirectives
+
+			result = append(result, d)
+			continue
+		}
+
+		if d.HasSubDirectives() {
+			return nil, fmt.Errorf(
+				"%s: syntax: include directive cannot have a block",
+				d.Position,
+			)
+		}
+
+		opts, err := parseIncludeParams(d.Parameters, filepath.Dir(path))
+		if err != nil {
+			return nil, fmt.Errorf("%s: syntax: %w", d.Position, err)
+		}
+
+		files, err := collectIncludeFiles(opts)
+		if err != nil {
+			return nil, fmt.Errorf("%s: syntax: %w", d.Position, err)
+		}
+
+		params, err := toImportParams(path, files)
+		if err != nil {
+			return nil, fmt.Errorf("%s: syntax: %w", d.Position, err)
+		}
+
+		// Zero matches produce zero imports: the include silently disappears.
+		for _, param := range params {
+			result = append(result, Directive{
+				Name:       "import",
+				Parameters: []string{param},
+				Origin:     d.Origin,
+				Position:   d.Position,
+			})
+		}
+	}
+
+	return result, nil
+}
+
 type includeOptions struct {
 	ConfigFolderPath string
 	Recursive        bool
