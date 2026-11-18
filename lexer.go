@@ -458,10 +458,12 @@ func (l *lexer) scanLineContinuation() (bool, error) {
 	}
 }
 
-// 反引号位于一个 Token的开头，由调用者保证
-// - 一直扫描 rune 直到遇到反引号停止
-// - peek 下一个 rune 必须是代码分隔符，LF，文件结束io.EOF
-// `...` 内不会执行任何转义，所有字符都原样保留
+// scanBacktickQuoted scans a backtick-quoted token.
+//
+// The caller has already consumed the opening backtick, and pos points at it.
+// Scanning stops at the next backtick, which MUST be followed by a token
+// separator, LF, or EOF.
+// No escape processing is done inside the quotes; every rune is preserved as-is.
 func (l *lexer) scanBacktickQuoted(pos Position) (Token, error) {
 	text := make([]rune, 0)
 
