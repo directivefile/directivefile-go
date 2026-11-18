@@ -10,20 +10,20 @@ type template struct {
 	SubDirectives []Directive // 模板体；展开时逐条克隆，再按 Slots 填参
 	// Arity = max(TemplateParam) + 1，不是 len(Slots)：同一个占位符编号允许在体内出现多次。
 	Arity int
-	Slots []Slot // 体内每个占位符的绑定：写到哪个位置、用第几个参数填
+	Slots []slot // 体内每个占位符的绑定：写到哪个位置、用第几个参数填
 }
 
 const maxTemplateArity = 32
 
-// Slot 标记体内一个真正的占位符位置。命令用「索引路径」定位，
+// slot 标记体内一个真正的占位符位置。命令用「索引路径」定位，
 // 因为 SubDirectives 是值切片，保存 *Directive 会随切片复制而失效。
-type Slot struct {
-	Location      SlotLocation // 写到哪
+type slot struct {
+	Location      slotLocation // 写到哪
 	TemplateParam int          // 用第几个 tmpl 参数填（数据来源）
 }
 
-// SlotLocation 是占位符的落点：沿 SubDirectives 逐层下探到某条命令，再定位到它的某个参数。
-type SlotLocation struct {
+// slotLocation 是占位符的落点：沿 SubDirectives 逐层下探到某条命令，再定位到它的某个参数。
+type slotLocation struct {
 	Path     []int // 从 SubDirectives 根逐层的下标
 	ParamIdx int   // 该命令的第几个参数，不是 tmpl 调用的第几个实参
 }
@@ -144,8 +144,8 @@ func extractTemplates(directives []Directive) (templates, []Directive, error) {
 	return tmpls, commands, nil
 }
 
-func analyzeTemplateBody(directives []Directive, pos Position) ([]Slot, int, error) {
-	var slots []Slot
+func analyzeTemplateBody(directives []Directive, pos Position) ([]slot, int, error) {
+	var slots []slot
 	maxParam := -1
 
 	var walk func([]Directive, []int) error
@@ -176,8 +176,8 @@ func analyzeTemplateBody(directives []Directive, pos Position) ([]Slot, int, err
 					continue
 				}
 
-				slots = append(slots, Slot{
-					Location: SlotLocation{
+				slots = append(slots, slot{
+					Location: slotLocation{
 						Path:     cmdPath,
 						ParamIdx: paramIdx,
 					},
@@ -202,7 +202,7 @@ func analyzeTemplateBody(directives []Directive, pos Position) ([]Slot, int, err
 	}
 
 	if err := validateTemplateSlots(slots, maxParam+1); err != nil {
-		return []Slot{}, 0, fmt.Errorf("%s: syntax: %w", pos, err)
+		return []slot{}, 0, fmt.Errorf("%s: syntax: %w", pos, err)
 	}
 
 	return slots, maxParam + 1, nil
@@ -254,17 +254,17 @@ func parseTemplateArg(s string) (param int, ok bool, err error) {
 	return param, true, nil
 }
 
-func validateTemplateSlots(slots []Slot, arity int) error {
+func validateTemplateSlots(slots []slot, arity int) error {
 	if arity > maxTemplateArity {
 		return fmt.Errorf("internal error: template arity %d exceeds the limit of %d (please report this as a bug)", arity, maxTemplateArity)
 	}
 	seen := make([]bool, arity)
 
-	for _, slot := range slots {
-		if slot.TemplateParam >= arity {
-			return fmt.Errorf("internal error: slot uses template parameter %d, but arity is only %d (please report this as a bug)", slot.TemplateParam, arity)
+	for _, sl := range slots {
+		if sl.TemplateParam >= arity {
+			return fmt.Errorf("internal error: slot uses template parameter %d, but arity is only %d (please report this as a bug)", sl.TemplateParam, arity)
 		}
-		seen[slot.TemplateParam] = true
+		seen[sl.TemplateParam] = true
 	}
 
 	for param, ok := range seen {
@@ -292,16 +292,16 @@ func (t *template) render(args []string, origin Origin) ([]Directive, error) {
 		expanded[i] = cloneDirective(t.SubDirectives[i], origin)
 	}
 
-	for _, slot := range t.Slots {
-		if len(slot.Location.Path) == 0 || slot.Location.Path[0] < 0 || slot.Location.Path[0] >= len(expanded) {
+	for _, sl := range t.Slots {
+		if len(sl.Location.Path) == 0 || sl.Location.Path[0] < 0 || sl.Location.Path[0] >= len(expanded) {
 			return nil, fmt.Errorf(
 				"template %q: invalid slot path",
 				t.Name,
 			)
 		}
 
-		d := &expanded[slot.Location.Path[0]]
-		for _, i := range slot.Location.Path[1:] {
+		d := &expanded[sl.Location.Path[0]]
+		for _, i := range sl.Location.Path[1:] {
 			if i < 0 || i >= len(d.SubDirectives) {
 				return nil, fmt.Errorf(
 					"template %q: invalid slot path",
@@ -311,21 +311,21 @@ func (t *template) render(args []string, origin Origin) ([]Directive, error) {
 			d = &d.SubDirectives[i] // lookup directive by path
 		}
 
-		if slot.Location.ParamIdx < 0 || slot.Location.ParamIdx >= len(d.Parameters) {
+		if sl.Location.ParamIdx < 0 || sl.Location.ParamIdx >= len(d.Parameters) {
 			return nil, fmt.Errorf(
 				"template %q: slot parameter index out of range",
 				t.Name,
 			)
 		}
 
-		if slot.TemplateParam < 0 || slot.TemplateParam >= len(args) {
+		if sl.TemplateParam < 0 || sl.TemplateParam >= len(args) {
 			return nil, fmt.Errorf(
 				"template %q: slot parameter index out of range",
 				t.Name,
 			)
 		}
 
-		d.Parameters[slot.Location.ParamIdx] = args[slot.TemplateParam]
+		d.Parameters[sl.Location.ParamIdx] = args[sl.TemplateParam]
 	}
 
 	return expanded, nil

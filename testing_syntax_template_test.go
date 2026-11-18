@@ -81,11 +81,11 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 			},
 			// {args[0]} appears twice in "forward", and the body keeps BOTH:
 			// Param 0 is a parameter, not a slot identity.
-			Slots: []Slot{
-				{Location: SlotLocation{Path: []int{0}, ParamIdx: 0}, TemplateParam: 0},
-				{Location: SlotLocation{Path: []int{0}, ParamIdx: 1}, TemplateParam: 1},
-				{Location: SlotLocation{Path: []int{0}, ParamIdx: 2}, TemplateParam: 0},
-				{Location: SlotLocation{Path: []int{1}, ParamIdx: 0}, TemplateParam: 1},
+			Slots: []slot{
+				{Location: slotLocation{Path: []int{0}, ParamIdx: 0}, TemplateParam: 0},
+				{Location: slotLocation{Path: []int{0}, ParamIdx: 1}, TemplateParam: 1},
+				{Location: slotLocation{Path: []int{0}, ParamIdx: 2}, TemplateParam: 0},
+				{Location: slotLocation{Path: []int{1}, ParamIdx: 0}, TemplateParam: 1},
 			},
 		}
 		if !reflect.DeepEqual(tmpl, want) {
@@ -108,7 +108,7 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 
 		// A placeholder one level down must carry a two-element Location.Path: the
 		// distinction between a body index and an arg index is the whole point
-		// of Slot.Path, and getting it wrong only shows up when nesting.
+		// of slot.Path, and getting it wrong only shows up when nesting.
 		wantSite := &template{
 			Name:  "site",
 			Arity: 2,
@@ -131,10 +131,10 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 					},
 				},
 			},
-			Slots: []Slot{
-				{Location: SlotLocation{Path: []int{0, 0}, ParamIdx: 0}, TemplateParam: 0},
-				{Location: SlotLocation{Path: []int{0, 1}, ParamIdx: 0}, TemplateParam: 1},
-				{Location: SlotLocation{Path: []int{0, 1}, ParamIdx: 1}, TemplateParam: 0},
+			Slots: []slot{
+				{Location: slotLocation{Path: []int{0, 0}, ParamIdx: 0}, TemplateParam: 0},
+				{Location: slotLocation{Path: []int{0, 1}, ParamIdx: 0}, TemplateParam: 1},
+				{Location: slotLocation{Path: []int{0, 1}, ParamIdx: 1}, TemplateParam: 0},
 			},
 		}
 		if got := templates["site"]; !reflect.DeepEqual(got, wantSite) {
@@ -240,8 +240,8 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 					Parameters: []string{"{args[0]}"},
 				},
 			},
-			Slots: []Slot{
-				{Location: SlotLocation{Path: []int{0}, ParamIdx: 0}, TemplateParam: 0},
+			Slots: []slot{
+				{Location: slotLocation{Path: []int{0}, ParamIdx: 0}, TemplateParam: 0},
 			},
 		}
 
@@ -288,10 +288,10 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 					},
 				},
 			},
-			Slots: []Slot{
-				{Location: SlotLocation{Path: []int{0, 0}, ParamIdx: 0}, TemplateParam: 0},
-				{Location: SlotLocation{Path: []int{0, 1}, ParamIdx: 0}, TemplateParam: 1},
-				{Location: SlotLocation{Path: []int{0, 1}, ParamIdx: 1}, TemplateParam: 0},
+			Slots: []slot{
+				{Location: slotLocation{Path: []int{0, 0}, ParamIdx: 0}, TemplateParam: 0},
+				{Location: slotLocation{Path: []int{0, 1}, ParamIdx: 0}, TemplateParam: 1},
+				{Location: slotLocation{Path: []int{0, 1}, ParamIdx: 1}, TemplateParam: 0},
 			},
 		}
 
