@@ -68,9 +68,18 @@ func expandIncludes(directives []Directive, path string) ([]Directive, error) {
 
 type includeOptions struct {
 	ConfigFolderPath string
-	Recursive        bool
-	Filter           filterMode
-	Filters          []string
+	// RecursiveFlag records that -r was written.
+	RecursiveFlag bool
+	Filter        filterMode
+	Filters       []string
+}
+
+// recursive reports whether the scan descends into subdirectories.
+//
+// There are two independent switches: -r and "*". Writing both is allowed and
+// changes nothing — the result is still recursive.
+func (o includeOptions) recursive() bool {
+	return o.RecursiveFlag || o.Filter == filterAll
 }
 
 type filterMode uint8
@@ -92,7 +101,7 @@ func parseIncludeParams(params []string, currentDir string) (includeOptions, err
 	if rIndex, err := findRecursiveFlag(params); err != nil {
 		return includeOptions{}, err
 	} else if rIndex >= 0 {
-		opts.Recursive = true
+		opts.RecursiveFlag = true
 		cleanParams = make([]string, 0, len(params)-1)
 		cleanParams = append(cleanParams, params[:rIndex]...)
 		cleanParams = append(cleanParams, params[rIndex+1:]...)
@@ -250,21 +259,27 @@ func collectIncludeFiles(opts includeOptions) ([]string, error) {
 	}
 
 	var out []string
+	skipSubFolders := !opts.recursive()
 	err := filepath.WalkDir(dir, func(p string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
 
 		if d.IsDir() {
-			// Folder paths have no extension: directories are never filtered.
-			switch {
-			case filepath.Clean(p) == filepath.Clean(dir):
-				return nil // the config folder is always scanned
-			case opts.Recursive:
-				return nil // -r: keep descending
-			default:
-				return filepath.SkipDir // no -r: top level only
+			// The WalkDir root is not a subdirectory: always enter it.
+			// This check must come first — skipSubFolder and the hidden-folder rule
+			// would otherwise skip the root itself.
+			if filepath.Clean(p) == filepath.Clean(dir) {
+				return nil // enter
 			}
+			if skipSubFolders {
+				return filepath.SkipDir // only -r or * can scan sub folders
+			}
+			// skip hidden folders
+			if opts.Filter != filterAll && strings.HasPrefix(d.Name(), ".") {
+				return filepath.SkipDir // only "*" can scan hidden folders
+			}
+			return nil // enter
 		}
 
 		switch opts.Filter {
