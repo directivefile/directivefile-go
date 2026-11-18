@@ -1,0 +1,2 @@
+# app.conf
+include ../fixtures/default .conf

@@ -1,0 +1,3 @@
+# Including this folder produces an import of this very file, which imports
+# itself again: the cycle must be reported by the import step, not silently stop.
+import self.df

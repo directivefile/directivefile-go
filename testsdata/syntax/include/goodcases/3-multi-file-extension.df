@@ -1,0 +1,3 @@
+# app.df
+# app.conf
+include ../fixtures/default .df .conf
