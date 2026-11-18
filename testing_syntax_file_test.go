@@ -1,6 +1,7 @@
 package directivefile
 
 import (
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -91,6 +92,27 @@ func TestParseFileGoodCases(t *testing.T) {
 			t.Fatalf("Parse():\n got: %#v\nwant: %#v", got, want)
 		}
 	})
+
+	// A UTF-8 BOM is metadata, not content: it is dropped before lexing, so the
+	// first directive starts at 1:1 and its name does not carry U+FEFF.
+	t.Run("7-utf-8-with-bom", func(t *testing.T) {
+		const path = "testsdata/syntax/file/goodcases/7-utf-8-with-bom.df"
+
+		got, err := Parse(path)
+		if err != nil {
+			t.Fatalf("Parse() error = %v", err)
+		}
+
+		want := File{Directives: []Directive{{
+			Name:       "server",
+			Parameters: []string{"127.0.0.1:8080"},
+			Position:   Position{Filename: path, Line: 1, Column: 1},
+		}}}
+
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("Parse():\n got: %#v\nwant: %#v", got, want)
+		}
+	})
 }
 
 // TestParseFileBadCases drives every file badcase through Parse().
@@ -101,7 +123,8 @@ func TestParseFileGoodCases(t *testing.T) {
 //
 // The files are numbered by order, not by rule: 1-3 reject an ill-formed block
 // (the three structural criteria in wiki/spec.md), 4-5 reject a brace that never
-// became a structural token, 6 rejects a depth overflow.
+// became a structural token, 6 rejects a depth overflow, 7-other-encode-* rejects
+// non-UTF-8 input (UTF-16LE, Shift-JIS, GBK).
 func TestParseFileBadCases(t *testing.T) {
 	// The `{` sits on a line of its own, so `dns` ends at the newline and the
 	// `{` starts a directive — which fails the directive shape rule. This is
@@ -203,4 +226,22 @@ func TestParseFileBadCases(t *testing.T) {
 			t.Fatalf("expected error containing %q, got %q", wantErr, err)
 		}
 	})
+
+	for _, name := range []string{
+		"7-other-encode-1-utf16le.df",
+		"7-other-encode-2-shift-jis.df",
+		"7-other-encode-3-gbk.df",
+	} {
+		t.Run(strings.TrimSuffix(name, ".df"), func(t *testing.T) {
+			path := filepath.Join("testsdata", "syntax", "file", "badcases", name)
+
+			_, err := Parse(path)
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+			if wantErr := path + ": invalid UTF-8"; err.Error() != wantErr {
+				t.Fatalf("expected %q, got %q", wantErr, err)
+			}
+		})
+	}
 }

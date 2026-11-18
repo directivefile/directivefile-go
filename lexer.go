@@ -15,7 +15,7 @@ import (
 // The input must be UTF-8 encoded; a leading UTF-8 BOM is ignored.
 func tokenize(input []byte, filename string) ([]Token, error) {
 	if !utf8.Valid(input) {
-		return nil, fmt.Errorf("%s: invalid UTF-8 ", filename) // TODO: add more error info
+		return nil, fmt.Errorf("%s: invalid UTF-8", filename)
 	}
 
 	l := lexer{filename: filename}
