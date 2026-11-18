@@ -2,40 +2,40 @@ package directivefile
 
 import "fmt"
 
-// templates 是「单个文件」内定义的模板集合
+// templates holds the templates defined in a single file, keyed by name.
 type templates map[string]*template
 
 type template struct {
-	Name          string      // 模板名：`(name)` 去掉括号后的部分
-	SubDirectives []Directive // 模板体；展开时逐条克隆，再按 Slots 填参
-	// Arity = max(TemplateParam) + 1，不是 len(Slots)：同一个占位符编号允许在体内出现多次。
+	Name          string      // template name, with the surrounding parentheses removed
+	SubDirectives []Directive // template body; cloned per instantiation and filled via Slots
+
+	// Arity is the number of arguments the template accepts: max(TemplateParam)+1.
+	// It is not len(Slots), because one argument may appear in several placeholders.
 	Arity int
-	Slots []slot // 体内每个占位符的绑定：写到哪个位置、用第几个参数填
+
+	Slots []slot // placeholder bindings: where to write, and which argument supplies the value
 }
 
 const maxTemplateArity = 32
 
-// slot 标记体内一个真正的占位符位置。命令用「索引路径」定位，
-// 因为 SubDirectives 是值切片，保存 *Directive 会随切片复制而失效。
+// slot marks one actual placeholder occurrence in a template body. The target
+// command is addressed by an index path because SubDirectives is a slice of
+// values;
 type slot struct {
-	Location      slotLocation // 写到哪
-	TemplateParam int          // 用第几个 tmpl 参数填（数据来源）
+	Location      slotLocation // where to write the value
+	TemplateParam int          // which tmpl argument supplies the value
 }
 
-// slotLocation 是占位符的落点：沿 SubDirectives 逐层下探到某条命令，再定位到它的某个参数。
+// slotLocation is a placeholder's destination: walk SubDirectives by Path to a
+// command, then select one of its parameters with ParamIdx.
 type slotLocation struct {
-	Path     []int // 从 SubDirectives 根逐层的下标
-	ParamIdx int   // 该命令的第几个参数，不是 tmpl 调用的第几个实参
+	Path     []int // indexes from the SubDirectives root, one per nesting level
+	ParamIdx int   // index into that command's Parameters, not the tmpl call's argument index
 }
 
-// 递归遍历每一个 directives 的 SubDirectives
-// 如果 cmd.Name = "tmpl" 则尝试替换
-// tmpl command 的第一个参数，用作 tmpl 查询名字，如果没有查到，则直接报错
-// 查到 template 则调用 render 获取用以替换 []Directive
-// 如果没有错误，则就地删除 tmpl command 就地插入 []Directive
-//
-// expandTemplates 就地替换 directives 中的 tmpl 调用。
-// 注意：它可能改写 directives 的底层数组，**调用方必须使用返回值**，不能依赖入参保持不变。
+// expandTemplates replaces tmpl calls in place. It may overwrite the backing
+// array, so callers MUST use the returned slice and must not rely on the input
+// slice remaining unchanged.
 func expandTemplates(directives []Directive, tmpls templates) ([]Directive, error) {
 	for i := 0; i < len(directives); i++ {
 		d := &directives[i]
@@ -208,11 +208,11 @@ func analyzeTemplateBody(directives []Directive, pos Position) ([]slot, int, err
 	return slots, maxParam + 1, nil
 }
 
-// isTemplateDirectiveName reports whether the already-validated directive name
-// uses the template definition shape, `(name)`.
+// isTemplateDirectiveName reports whether an already-validated directive name
+// has the template definition shape, `(name)`.
 //
-// 这是 validateDirectiveName 的弱化版：能走到这里的名字已经过了那道校验，
-// 所以只需判形状，不用再管长度、码表与点号分段。
+// This is a weaker check than validateDirectiveName: the name has already
+// passed that validation, so only the parentheses shape matters here.
 func isTemplateDirectiveName(s string) bool {
 	if len(s) == 0 {
 		return false
@@ -244,8 +244,8 @@ func parseTemplateArg(s string) (param int, ok bool, err error) {
 		}
 
 		param = param*10 + int(index[i]-'0')
-		// 调用方会 +1 得到 Arity，所以 param 必须 < maxTemplateArity，
-		// 等价于 param+1 <= maxTemplateArity。
+		// The caller derives Arity as param+1, so param must be less than
+		// maxTemplateArity (equivalently, param+1 <= maxTemplateArity).
 		if param >= maxTemplateArity {
 			return 0, false, fmt.Errorf("%s exceeds the maximum of %d template parameters", s, maxTemplateArity)
 		}
