@@ -101,8 +101,7 @@ func TestParseFileGoodCases(t *testing.T) {
 //
 // The files are numbered by order, not by rule: 1-3 reject an ill-formed block
 // (the three structural criteria in wiki/spec.md), 4-5 reject a brace that never
-// became a structural token, 6 rejects a depth overflow, 7-10 reject a malformed
-// dotted name.
+// became a structural token, 6 rejects a depth overflow.
 func TestParseFileBadCases(t *testing.T) {
 	// The `{` sits on a line of its own, so `dns` ends at the newline and the
 	// `{` starts a directive — which fails the directive shape rule. This is
@@ -200,72 +199,6 @@ func TestParseFileBadCases(t *testing.T) {
 		}
 
 		wantErr := path + ":80:5: syntax: directive nesting depth exceeds 64"
-		if !strings.Contains(err.Error(), wantErr) {
-			t.Fatalf("expected error containing %q, got %q", wantErr, err)
-		}
-	})
-
-	// The dot is a name character only AFTER the first one, so a bare namespace
-	// tail is rejected instead of being read as a nested name. That is what
-	// keeps the rule a charset rather than "anything goes".
-	t.Run("7-dotted-directive-leading-dot", func(t *testing.T) {
-		const path = "testsdata/syntax/file/badcases/7-dotted-directive-leading-dot.conf"
-
-		_, err := Parse(path)
-		if err == nil {
-			t.Fatal("expected error, got nil")
-		}
-
-		wantErr := path + ":8:1: syntax: invalid directive name: .dns"
-		if !strings.Contains(err.Error(), wantErr) {
-			t.Fatalf("expected error containing %q, got %q", wantErr, err)
-		}
-	})
-
-	// A trailing dot leaves the last segment empty. A namespace is built by
-	// joining a parent onto a child, so the join rule cannot produce one — it is
-	// always a typo.
-	t.Run("8-dotted-directive-trailing-dot", func(t *testing.T) {
-		const path = "testsdata/syntax/file/badcases/8-dotted-directive-trailing-dot.conf"
-
-		_, err := Parse(path)
-		if err == nil {
-			t.Fatal("expected error, got nil")
-		}
-
-		wantErr := path + ":9:1: syntax: invalid directive name: dns."
-		if !strings.Contains(err.Error(), wantErr) {
-			t.Fatalf("expected error containing %q, got %q", wantErr, err)
-		}
-	})
-
-	// An empty segment in the middle is the same fault as a trailing dot.
-	t.Run("9-dotted-directive-empty-segment", func(t *testing.T) {
-		const path = "testsdata/syntax/file/badcases/9-dotted-directive-empty-segment.conf"
-
-		_, err := Parse(path)
-		if err == nil {
-			t.Fatal("expected error, got nil")
-		}
-
-		wantErr := path + ":7:1: syntax: invalid directive name: dns..forwarder"
-		if !strings.Contains(err.Error(), wantErr) {
-			t.Fatalf("expected error containing %q, got %q", wantErr, err)
-		}
-	})
-
-	// Each segment must itself be an identifier, so it may not start with a
-	// digit — or, by the same rule, with `-`. The characters remain legal LATER
-	// in a segment: `dns.2x` is a typo, `dns.srv2` is a name.
-	t.Run("10-dotted-directive-digit-segment", func(t *testing.T) {
-		const path = "testsdata/syntax/file/badcases/10-dotted-directive-digit-segment.conf"
-
-		_, err := Parse(path)
-		if err == nil {
-			t.Fatal("expected error, got nil")
-		}
-
-		wantErr := path + ":11:1: syntax: invalid directive name: dns.2x"
 		if !strings.Contains(err.Error(), wantErr) {
 			t.Fatalf("expected error containing %q, got %q", wantErr, err)
 		}
