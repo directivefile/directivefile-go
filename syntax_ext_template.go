@@ -2,10 +2,10 @@ package directivefile
 
 import "fmt"
 
-// Templates 是「单个文件」内定义的模板集合
-type Templates map[string]*Template
+// templates 是「单个文件」内定义的模板集合
+type templates map[string]*template
 
-type Template struct {
+type template struct {
 	Name          string      // 模板名：`(name)` 去掉括号后的部分
 	SubDirectives []Directive // 模板体；展开时逐条克隆，再按 Slots 填参
 	// Arity = max(TemplateParam) + 1，不是 len(Slots)：同一个占位符编号允许在体内出现多次。
@@ -36,7 +36,7 @@ type SlotLocation struct {
 //
 // expandTemplates 就地替换 directives 中的 tmpl 调用。
 // 注意：它可能改写 directives 的底层数组，**调用方必须使用返回值**，不能依赖入参保持不变。
-func expandTemplates(directives []Directive, templates Templates) ([]Directive, error) {
+func expandTemplates(directives []Directive, tmpls templates) ([]Directive, error) {
 	for i := 0; i < len(directives); i++ {
 		d := &directives[i]
 
@@ -55,7 +55,7 @@ func expandTemplates(directives []Directive, templates Templates) ([]Directive, 
 			}
 
 			name := d.Parameters[0]
-			tmpl, ok := templates[name]
+			tmpl, ok := tmpls[name]
 			if !ok {
 				return nil, fmt.Errorf(
 					"%s: syntax: template %q not found in this file",
@@ -77,7 +77,7 @@ func expandTemplates(directives []Directive, templates Templates) ([]Directive, 
 			continue
 		}
 
-		subDirectives, err := expandTemplates(d.SubDirectives, templates)
+		subDirectives, err := expandTemplates(d.SubDirectives, tmpls)
 		if err != nil {
 			return nil, err
 		}
@@ -87,8 +87,8 @@ func expandTemplates(directives []Directive, templates Templates) ([]Directive, 
 	return directives, nil
 }
 
-func extractTemplates(directives []Directive) (Templates, []Directive, error) {
-	templates := make(Templates)
+func extractTemplates(directives []Directive) (templates, []Directive, error) {
+	tmpls := make(templates)
 	commands := make([]Directive, 0, len(directives))
 
 	extractDirectiveName := func(s string) string {
@@ -120,7 +120,7 @@ func extractTemplates(directives []Directive) (Templates, []Directive, error) {
 			)
 		}
 
-		if _, exists := templates[name]; exists {
+		if _, exists := tmpls[name]; exists {
 			return nil, nil, fmt.Errorf(
 				"%s: syntax: duplicate template: %s",
 				d.Position,
@@ -133,7 +133,7 @@ func extractTemplates(directives []Directive) (Templates, []Directive, error) {
 			return nil, nil, err
 		}
 
-		templates[name] = &Template{
+		tmpls[name] = &template{
 			Name:          name,
 			SubDirectives: d.SubDirectives,
 			Arity:         arity,
@@ -141,7 +141,7 @@ func extractTemplates(directives []Directive) (Templates, []Directive, error) {
 		}
 	}
 
-	return templates, commands, nil
+	return tmpls, commands, nil
 }
 
 func analyzeTemplateBody(directives []Directive, pos Position) ([]Slot, int, error) {
@@ -277,7 +277,7 @@ func validateTemplateSlots(slots []Slot, arity int) error {
 }
 
 // TODO better error info
-func (t *Template) render(args []string, origin Origin) ([]Directive, error) {
+func (t *template) render(args []string, origin Origin) ([]Directive, error) {
 	if len(args) != t.Arity {
 		return nil, fmt.Errorf(
 			"template %q expects %d parameters, got %d",

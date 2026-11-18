@@ -18,7 +18,7 @@ import (
 // It deliberately stops BEFORE parseFile's expansion steps: once parseFile runs
 // extractTemplates itself, the template table is no longer observable, and the
 // Slots/Arity assertions below would have nothing to check.
-func extractTemplateTestdata(t *testing.T, path string) (Templates, []Directive) {
+func extractTemplateTestdata(t *testing.T, path string) (templates, []Directive) {
 	t.Helper()
 
 	tokens, err := tokenize(readTestdata(t, path), path)
@@ -64,7 +64,7 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 			t.Fatal(`template "proxy" not found`)
 		}
 
-		want := &Template{
+		want := &template{
 			Name:  "proxy",
 			Arity: 2,
 			SubDirectives: []Directive{
@@ -109,7 +109,7 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 		// A placeholder one level down must carry a two-element Location.Path: the
 		// distinction between a body index and an arg index is the whole point
 		// of Slot.Path, and getting it wrong only shows up when nesting.
-		wantSite := &Template{
+		wantSite := &template{
 			Name:  "site",
 			Arity: 2,
 			SubDirectives: []Directive{
@@ -142,7 +142,7 @@ func TestExtractTemplatesGoodCases(t *testing.T) {
 		}
 
 		// No placeholders at all: arity 0 and no slots.
-		wantNoParameters := &Template{
+		wantNoParameters := &template{
 			Name:  "no-args",
 			Arity: 0,
 			SubDirectives: []Directive{
@@ -231,7 +231,7 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 	}
 
 	t.Run("test 1", func(t *testing.T) {
-		template := Template{
+		tmpl := template{
 			Name:  "tmpl_1",
 			Arity: 1,
 			SubDirectives: []Directive{
@@ -245,7 +245,7 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 			},
 		}
 
-		got, err := template.render([]string{"hello"}, callSite)
+		got, err := tmpl.render([]string{"hello"}, callSite)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -269,7 +269,7 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 			TemplateName: "proxy",
 		}
 
-		template := Template{
+		tmpl := template{
 			Name:  "proxy",
 			Arity: 2,
 			SubDirectives: []Directive{
@@ -295,7 +295,7 @@ func TestTemplateRenderGoodCases(t *testing.T) {
 			},
 		}
 
-		got, err := template.render([]string{
+		got, err := tmpl.render([]string{
 			"127.0.0.1:8080",
 			"example.com:443",
 		}, origin)
