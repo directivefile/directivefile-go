@@ -17,6 +17,20 @@ func TestTokenizeEmptyAndComment(t *testing.T) {
 		}
 	})
 
+	t.Run("only BOM", func(t *testing.T) {
+		t.Parallel()
+		const path = "testsdata/syntax/file/goodcases/7-utf-8-2-only-have-bom.df"
+		tokens, err := tokenize(readTestdata(t, path), path)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		// A BOM is metadata, not content: with the BOM stripped the input is
+		// empty, so it must behave exactly like a 0-byte file.
+		if len(tokens) != 0 {
+			t.Fatalf("expected no tokens, got %d", len(tokens))
+		}
+	})
+
 	t.Run("only newline token", func(t *testing.T) {
 		t.Parallel()
 		const path = "testsdata/lexer/goodcases/0-only-newline.conf"

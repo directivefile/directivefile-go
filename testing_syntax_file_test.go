@@ -95,8 +95,8 @@ func TestParseFileGoodCases(t *testing.T) {
 
 	// A UTF-8 BOM is metadata, not content: it is dropped before lexing, so the
 	// first directive starts at 1:1 and its name does not carry U+FEFF.
-	t.Run("7-utf-8-with-bom", func(t *testing.T) {
-		const path = "testsdata/syntax/file/goodcases/7-utf-8-with-bom.df"
+	t.Run("7-utf-8-1-with-bom", func(t *testing.T) {
+		const path = "testsdata/syntax/file/goodcases/7-utf-8-1-with-bom.df"
 
 		got, err := Parse(path)
 		if err != nil {
@@ -122,8 +122,8 @@ func TestParseFileGoodCases(t *testing.T) {
 // of it too: it proves the error names the right file.
 //
 // The files are numbered by order, not by rule: 1-3 reject an ill-formed block
-// (the three structural criteria in wiki/spec.md), 4-5 reject a brace that never
-// became a structural token, 6 rejects a depth overflow, 7-other-encode-* rejects
+// (the three structural criteria), 4-5 reject a brace that never became a
+// structural token, 6 rejects a depth overflow, 7-other-encode-* rejects
 // non-UTF-8 input (UTF-16LE, Shift-JIS, GBK).
 func TestParseFileBadCases(t *testing.T) {
 	// The `{` sits on a line of its own, so `dns` ends at the newline and the

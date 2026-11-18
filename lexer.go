@@ -9,20 +9,21 @@ import (
 	"unicode/utf8"
 )
 
+// utf8BOM is the UTF-8 byte order mark. It is metadata, not file content.
+var utf8BOM = []byte{0xEF, 0xBB, 0xBF}
+
 // tokenize lexes input into a sequence of tokens.
 // Comments are discarded during lexing.
 // filename is used as the source filename in token positions.
-// The input must be UTF-8 encoded; a leading UTF-8 BOM is ignored.
+// The input MUST be UTF-8 encoded; a leading UTF-8 BOM is ignored.
 func tokenize(input []byte, filename string) ([]Token, error) {
+	input = bytes.TrimPrefix(input, utf8BOM)
 	if !utf8.Valid(input) {
 		return nil, fmt.Errorf("%s: invalid UTF-8", filename)
 	}
 
-	l := lexer{filename: filename}
-	if err := l.load(bytes.NewReader(input)); err != nil {
-		if err == io.EOF {
-			return []Token{}, nil // empty directivefile
-		}
+	l, err := newLexer(input, filename)
+	if err != nil {
 		return nil, err
 	}
 	var tokens []Token
@@ -37,15 +38,8 @@ func tokenize(input []byte, filename string) ([]Token, error) {
 		tokens = append(tokens, token)
 	}
 
-	// A file's last statement is terminated even when the file does not end with
-	// a newline (wiki/token_rules.md §EOF): synthesise the missing NewLine Token
-	// so the parser never needs an end-of-file special case.
-	//
-	// The gate is the INPUT, not the token slice. A file holding only a comment
-	// and no trailing newline produces no token at all (`#` is dropped by
-	// scanComment, then the final nextRune hits EOF), yet it is still one line of
-	// source that EOF terminates — it must yield exactly one NewLine. A 0-byte
-	// file, by contrast, has no line to terminate and stays empty.
+	// If the file's last directive is not terminated by a NEWLINE, append one
+	// automatically so the parser never needs an end-of-file special case.
 	if len(input) > 0 && (len(tokens) == 0 || tokens[len(tokens)-1].Type != NewLine) {
 		tokens = append(tokens, Token{
 			Type: NewLine,
@@ -59,10 +53,7 @@ func tokenize(input []byte, filename string) ([]Token, error) {
 	return tokens, nil
 }
 
-// lexer is a utility which can get values, token by
-// token, from a Reader. A token is a word, and tokens
-// are separated by whitespace. A word can be enclosed
-// in quotes if it contains whitespace.
+// lexer reads tokens from a Reader, one token at a time.
 type lexer struct {
 	reader   *bufio.Reader
 	filename string // source file, copied into every Token.Pos.File
@@ -73,26 +64,30 @@ type lexer struct {
 	prevToken Token
 }
 
-// load prepares the lexer to scan an input for tokens.
-// It discards any leading BOM.
-func (l *lexer) load(input io.Reader) error {
-	l.reader = bufio.NewReader(input)
-	l.nextRuneLine = 1
-	l.nextRuneColumn = 1
+// newLexer returns a lexer over input, with any leading BOM skipped.
+// Empty input is valid and leaves the lexer at EOF.
+func newLexer(input []byte, filename string) (*lexer, error) {
+	l := &lexer{
+		reader:         bufio.NewReader(bytes.NewReader(input)),
+		filename:       filename,
+		nextRuneLine:   1,
+		nextRuneColumn: 1,
+	}
 
-	// discard BOM, if present
 	firstCh, _, err := l.reader.ReadRune()
 	if err != nil {
-		return err
+		if err == io.EOF {
+			return l, nil // empty input
+		}
+		return nil, err
 	}
 	if firstCh != 0xFEFF {
-		err := l.reader.UnreadRune()
-		if err != nil {
-			return err
+		if err := l.reader.UnreadRune(); err != nil {
+			return nil, err
 		}
 	}
 
-	return nil
+	return l, nil
 }
 
 func (l *lexer) nextToken() (Token, bool, error) {

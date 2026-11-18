@@ -7,8 +7,8 @@ import (
 
 // valuesOf returns the Text of every token that carries a value, skipping the
 // structural markers. NewLine is the only one today; it is skipped because
-// tokenize always appends one at EOF (wiki/token_rules.md §EOF), which would
-// otherwise add noise to every value assertion.
+// tokenize always appends one at EOF, which would otherwise add noise to every
+// value assertion.
 func valuesOf(tokens []Token) []string {
 	out := make([]string, 0, len(tokens))
 	for _, tk := range tokens {
