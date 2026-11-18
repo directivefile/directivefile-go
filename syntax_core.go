@@ -18,13 +18,13 @@ type Directive struct {
 	Position      Position
 }
 
-// Origin 描述一个命令是从哪里展开来的（tmpl 调用 / import）。
-// 零值表示命令来自本源文件、没有经过任何展开。
+// Origin describes how a directive was expanded (a tmpl call or an import).
+// The zero value means the directive came directly from the parsed file.
 type Origin struct {
-	TmplPosition   Position
-	TemplateName   string
-	ImportPosition Position
-	ImportChain    []string
+	TmplPosition   Position // tmpl call site, if instantiated from a template
+	TemplateName   string   // template name, if instantiated from a template
+	ImportPosition Position // import directive that brought the file in, if imported
+	ImportChain    []string // files traversed to reach the imported file
 }
 
 // HasSubDirectives reports whether the directive opens a block ({ ... }).
