@@ -9,11 +9,11 @@ import (
 	"unicode/utf8"
 )
 
-// Tokenize lexes input into a sequence of tokens.
+// tokenize lexes input into a sequence of tokens.
 // Comments are discarded during lexing.
 // filename is used as the source filename in token positions.
 // The input must be UTF-8 encoded; a leading UTF-8 BOM is ignored.
-func Tokenize(input []byte, filename string) ([]Token, error) {
+func tokenize(input []byte, filename string) ([]Token, error) {
 	if !utf8.Valid(input) {
 		return nil, fmt.Errorf("%s: invalid UTF-8 ", filename) // TODO: add more error info
 	}

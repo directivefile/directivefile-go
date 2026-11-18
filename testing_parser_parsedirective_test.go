@@ -14,9 +14,9 @@ func TestParseDirectiveGoodCases(t *testing.T) {
 	t.Run("1-simple-block", func(t *testing.T) {
 		const path = "testsdata/syntax/file/goodcases/1-simple-block.conf"
 
-		tokens, err := Tokenize(readTestdata(t, path), path)
+		tokens, err := tokenize(readTestdata(t, path), path)
 		if err != nil {
-			t.Fatalf("Tokenize() error = %v", err)
+			t.Fatalf("tokenize() error = %v", err)
 		}
 
 		p := &parser{tokens: tokens}
@@ -52,9 +52,9 @@ func TestParseDirectiveGoodCases(t *testing.T) {
 	t.Run("2-nested-block", func(t *testing.T) {
 		const path = "testsdata/syntax/file/goodcases/2-nested-block.conf"
 
-		tokens, err := Tokenize(readTestdata(t, path), path)
+		tokens, err := tokenize(readTestdata(t, path), path)
 		if err != nil {
-			t.Fatalf("Tokenize() error = %v", err)
+			t.Fatalf("tokenize() error = %v", err)
 		}
 
 		p := &parser{tokens: tokens}

@@ -20,7 +20,7 @@ func checkUnquotedFile(t *testing.T, file string, want []wantTok) {
 	t.Helper()
 
 	path := "testsdata/lexer_token/goodcase/" + file
-	tokens, err := Tokenize(readTestdata(t, path), path)
+	tokens, err := tokenize(readTestdata(t, path), path)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -278,7 +278,7 @@ func TestTokenizeUnquotedStringGoodCases(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			tokens, err := Tokenize([]byte(tc.input), configFilePlaceholder)
+			tokens, err := tokenize([]byte(tc.input), configFilePlaceholder)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}

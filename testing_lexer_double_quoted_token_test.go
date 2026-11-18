@@ -104,11 +104,11 @@ func TestTokenizeDoubleQuotedStringGoodCases(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			tokens, err := Tokenize([]byte(tc.input), configFilePlaceholder)
+			tokens, err := tokenize([]byte(tc.input), configFilePlaceholder)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			// The inline inputs have no trailing newline, so Tokenize appends the
+			// The inline inputs have no trailing newline, so tokenize appends the
 			// NewLine it synthesises at EOF — compare values only.
 			got := valuesOf(tokens)
 			if len(got) != 1 {
@@ -123,7 +123,7 @@ func TestTokenizeDoubleQuotedStringGoodCases(t *testing.T) {
 	t.Run("only one double-quoted-string token in file 1", func(t *testing.T) {
 		t.Parallel()
 		const path = "testsdata/lexer_token/goodcase/2-double-quoted-2.conf"
-		_, err := Tokenize(readTestdata(t, path), path)
+		_, err := tokenize(readTestdata(t, path), path)
 		if err != nil {
 			t.Fatal("expected nil, got error")
 		}
@@ -132,7 +132,7 @@ func TestTokenizeDoubleQuotedStringGoodCases(t *testing.T) {
 	t.Run("only one double-quoted-string token in file 2", func(t *testing.T) {
 		t.Parallel()
 		const path = "testsdata/lexer_token/goodcase/2-double-quoted-3.conf"
-		_, err := Tokenize(readTestdata(t, path), path)
+		_, err := tokenize(readTestdata(t, path), path)
 		if err != nil {
 			t.Fatal("expected nil, got error")
 		}
@@ -141,7 +141,7 @@ func TestTokenizeDoubleQuotedStringGoodCases(t *testing.T) {
 	t.Run("only one double-quoted-string token in file 3", func(t *testing.T) {
 		t.Parallel()
 		const path = "testsdata/lexer_token/goodcase/2-double-quoted-4.conf"
-		_, err := Tokenize(readTestdata(t, path), path)
+		_, err := tokenize(readTestdata(t, path), path)
 		if err != nil {
 			t.Fatal("expected nil, got error")
 		}
@@ -211,7 +211,7 @@ func TestTokenizeDoubleQuotedStringBadCases(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := Tokenize([]byte(tc.input), configFilePlaceholder)
+			_, err := tokenize([]byte(tc.input), configFilePlaceholder)
 			if err == nil {
 				t.Fatal("expected error, got nil")
 			}
@@ -225,7 +225,7 @@ func TestTokenizeDoubleQuotedStringBadCases(t *testing.T) {
 		t.Parallel()
 		const path = "testsdata/lexer_token/badcase/2-double-quoted-unterminated-1.conf"
 		const wantErr = "unterminated double-quoted string"
-		_, err := Tokenize(readTestdata(t, path), path)
+		_, err := tokenize(readTestdata(t, path), path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}

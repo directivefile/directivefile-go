@@ -24,7 +24,7 @@ func parseFile(path string, origin Origin) (File, error) {
 	if err != nil {
 		return File{}, err
 	}
-	tokens, err := Tokenize(input, path)
+	tokens, err := tokenize(input, path)
 	if err != nil {
 		return File{}, err
 	}

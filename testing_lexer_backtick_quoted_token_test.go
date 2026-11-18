@@ -46,7 +46,7 @@ func TestTokenizeBacktickStringGoodCases(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tok, err := Tokenize([]byte(string(tt.input)), configFilePlaceholder)
+			tok, err := tokenize([]byte(string(tt.input)), configFilePlaceholder)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -69,7 +69,7 @@ func TestTokenizeBacktickStringGoodCases(t *testing.T) {
 		const configpath = "testsdata/lexer_token/goodcase/3-backtick-quoted-1.conf"
 		want := `aaa
 bbb`
-		tokens, err := Tokenize(readTestdata(t, configpath), configpath)
+		tokens, err := tokenize(readTestdata(t, configpath), configpath)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -86,7 +86,7 @@ bbb`
 
 bbb
 `
-		tokens, err := Tokenize(readTestdata(t, configpath), configpath)
+		tokens, err := tokenize(readTestdata(t, configpath), configpath)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -101,7 +101,7 @@ bbb
 		want := `aaa
 # blah blah 
 `
-		tokens, err := Tokenize(readTestdata(t, configpath), configpath)
+		tokens, err := tokenize(readTestdata(t, configpath), configpath)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -119,7 +119,7 @@ aaa
 
 bbb
 `
-		tokens, err := Tokenize(readTestdata(t, configpath), configpath)
+		tokens, err := tokenize(readTestdata(t, configpath), configpath)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -175,7 +175,7 @@ func TestTokenizeBacktickStringBadCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := Tokenize([]byte(string(tt.input)), configFilePlaceholder)
+			_, err := tokenize([]byte(string(tt.input)), configFilePlaceholder)
 			if err == nil {
 				t.Fatal("unexpected error got nil")
 			}
@@ -184,7 +184,7 @@ func TestTokenizeBacktickStringBadCases(t *testing.T) {
 
 	t.Run("backtick_badcase_1", func(t *testing.T) {
 		const path = "testsdata/lexer_token/badcase/3-backtick-quoted-1.conf"
-		_, err := Tokenize(readTestdata(t, path), path)
+		_, err := tokenize(readTestdata(t, path), path)
 		if err == nil {
 			t.Fatal("unexpected error got nil")
 		}
@@ -192,7 +192,7 @@ func TestTokenizeBacktickStringBadCases(t *testing.T) {
 
 	t.Run("backtick_badcase_2", func(t *testing.T) {
 		const path = "testsdata/lexer_token/badcase/3-backtick-quoted-2.conf"
-		_, err := Tokenize(readTestdata(t, path), path)
+		_, err := tokenize(readTestdata(t, path), path)
 		if err == nil {
 			t.Fatal("unexpected error got nil")
 		}
@@ -200,7 +200,7 @@ func TestTokenizeBacktickStringBadCases(t *testing.T) {
 
 	t.Run("backtick_badcase_3", func(t *testing.T) {
 		const path = "testsdata/lexer_token/badcase/3-backtick-quoted-3.conf"
-		_, err := Tokenize(readTestdata(t, path), path)
+		_, err := tokenize(readTestdata(t, path), path)
 		if err == nil {
 			t.Fatal("unexpected error got nil")
 		}

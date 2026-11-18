@@ -8,7 +8,7 @@ func TestTokenizeEmptyAndComment(t *testing.T) {
 	t.Run("empty file", func(t *testing.T) {
 		t.Parallel()
 		const path = "testsdata/lexer/goodcases/0-empty.conf"
-		tokens, err := Tokenize(readTestdata(t, path), path)
+		tokens, err := tokenize(readTestdata(t, path), path)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -20,7 +20,7 @@ func TestTokenizeEmptyAndComment(t *testing.T) {
 	t.Run("only newline token", func(t *testing.T) {
 		t.Parallel()
 		const path = "testsdata/lexer/goodcases/0-only-newline.conf"
-		tokens, err := Tokenize(readTestdata(t, path), path)
+		tokens, err := tokenize(readTestdata(t, path), path)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -37,7 +37,7 @@ func TestTokenizeEmptyAndComment(t *testing.T) {
 	t.Run("only comment", func(t *testing.T) {
 		t.Parallel()
 		const path = "testsdata/lexer/goodcases/0-only-comment.conf"
-		tokens, err := Tokenize(readTestdata(t, path), path)
+		tokens, err := tokenize(readTestdata(t, path), path)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -52,7 +52,7 @@ func TestTokenizeEmptyAndComment(t *testing.T) {
 	t.Run("normarl comment 1", func(t *testing.T) {
 		t.Parallel()
 		const path = "testsdata/lexer/goodcases/1-comment-1.conf"
-		tokens, err := Tokenize(readTestdata(t, path), path)
+		tokens, err := tokenize(readTestdata(t, path), path)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -71,7 +71,7 @@ func TestTokenizeEmptyAndComment(t *testing.T) {
 	t.Run("normarl comment 2", func(t *testing.T) {
 		t.Parallel()
 		const path = "testsdata/lexer/goodcases/1-comment-2.conf"
-		tokens, err := Tokenize(readTestdata(t, path), path)
+		tokens, err := tokenize(readTestdata(t, path), path)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -89,7 +89,7 @@ func TestTokenizeEmptyAndComment(t *testing.T) {
 	t.Run("only one comment char", func(t *testing.T) {
 		t.Parallel()
 		const path = "testsdata/lexer/goodcases/1-comment-3.conf"
-		tokens, err := Tokenize(readTestdata(t, path), path)
+		tokens, err := tokenize(readTestdata(t, path), path)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -109,7 +109,7 @@ func TestTokenizeLineContinuationGoodCases(t *testing.T) {
 		t.Parallel()
 
 		const path = "testsdata/lexer/goodcases/3-quoted-string-with-line-continuation.conf"
-		tokens, err := Tokenize(readTestdata(t, path), path)
+		tokens, err := tokenize(readTestdata(t, path), path)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -124,7 +124,7 @@ func TestTokenizeLineContinuationBadCases(t *testing.T) {
 	t.Run("three_backslashes_are_not_line_continuations", func(t *testing.T) {
 		t.Parallel()
 		const path = "testsdata/lexer/badcases/5-line-continuation-9.conf"
-		tokens, err := Tokenize(readTestdata(t, path), path)
+		tokens, err := tokenize(readTestdata(t, path), path)
 		if err != nil {
 			t.Fatal("expected nil, got error")
 		}

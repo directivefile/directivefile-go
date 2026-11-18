@@ -21,9 +21,9 @@ import (
 func extractTemplateTestdata(t *testing.T, path string) (Templates, []Directive) {
 	t.Helper()
 
-	tokens, err := Tokenize(readTestdata(t, path), path)
+	tokens, err := tokenize(readTestdata(t, path), path)
 	if err != nil {
-		t.Fatalf("Tokenize() error = %v", err)
+		t.Fatalf("tokenize() error = %v", err)
 	}
 
 	p := &parser{tokens: tokens}
