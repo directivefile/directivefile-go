@@ -2,6 +2,7 @@ package directivefile
 
 import (
 	"fmt"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -9,8 +10,8 @@ import (
 
 func TestExpandImportsGoodCase(t *testing.T) {
 	t.Run("imported file holds a block", func(t *testing.T) {
-		const path = "testsdata/syntax/import/goodcases/1-import-block.conf"
-		const target = "testsdata/syntax/import/fixtures/block.conf"
+		path := filepath.FromSlash("testsdata/syntax/import/goodcases/1-import-block.conf")
+		target := filepath.FromSlash("testsdata/syntax/import/fixtures/block.conf")
 
 		file, err := Parse(path)
 		if err != nil {
@@ -70,8 +71,8 @@ func TestExpandImportsGoodCase(t *testing.T) {
 
 func TestExpandImportBadCase(t *testing.T) {
 	t.Run("empty imported file", func(t *testing.T) {
-		const path = "testsdata/syntax/import/badcases/3-import-empty-file.conf"
-		const target = "testsdata/syntax/import/fixtures/empty.conf"
+		path := filepath.FromSlash("testsdata/syntax/import/badcases/3-import-empty-file.conf")
+		target := filepath.FromSlash("testsdata/syntax/import/fixtures/empty.conf")
 
 		_, err := Parse(path)
 		if err == nil {
@@ -89,8 +90,8 @@ func TestExpandImportBadCase(t *testing.T) {
 	})
 
 	t.Run("defs-only imported file", func(t *testing.T) {
-		const path = "testsdata/syntax/import/badcases/4-import-defs-only-file.conf"
-		const target = "testsdata/syntax/import/fixtures/defs-only.conf"
+		path := filepath.FromSlash("testsdata/syntax/import/badcases/4-import-defs-only-file.conf")
+		target := filepath.FromSlash("testsdata/syntax/import/fixtures/defs-only.conf")
 
 		_, err := Parse(path)
 		if err == nil {
@@ -110,7 +111,7 @@ func TestExpandImportBadCase(t *testing.T) {
 
 func TestExpandImportsBadCaseCycleImport(t *testing.T) {
 	t.Run("import self", func(t *testing.T) {
-		const path = "testsdata/syntax/import/badcases/1-self-import.conf"
+		path := filepath.FromSlash("testsdata/syntax/import/badcases/1-self-import.conf")
 
 		_, err := Parse(path)
 		if err == nil {
@@ -135,9 +136,9 @@ func TestExpandImportsBadCaseCycleImport(t *testing.T) {
 	})
 
 	t.Run("two files import each other", func(t *testing.T) {
-		const path = "testsdata/syntax/import/badcases/2-two-file-cycle.conf"
-		const a = "testsdata/syntax/import/fixtures/cycle-a.conf"
-		const b = "testsdata/syntax/import/fixtures/cycle-b.conf"
+		path := filepath.FromSlash("testsdata/syntax/import/badcases/2-two-file-cycle.conf")
+		a := filepath.FromSlash("testsdata/syntax/import/fixtures/cycle-a.conf")
+		b := filepath.FromSlash("testsdata/syntax/import/fixtures/cycle-b.conf")
 
 		_, err := Parse(path)
 		if err == nil {
