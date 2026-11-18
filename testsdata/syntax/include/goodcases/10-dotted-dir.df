@@ -1,0 +1,2 @@
+include ../fixtures/dotted-dirs/conf.config
+include ../fixtures/dotted-dirs/conf.d

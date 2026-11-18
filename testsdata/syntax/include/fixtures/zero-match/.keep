@@ -1,0 +1,3 @@
+# The only entry here is a dot-file, and the default set skips those: the include
+# matches zero files and must stay silent (no error, no import).
+keep

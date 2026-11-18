@@ -1,0 +1,6 @@
+# The template body holds an include. Calling tmpl expands it at the call site,
+# and only then is the folder scanned.
+(t) {
+    include ./conf .conf
+}
+tmpl t

@@ -1,0 +1,3 @@
+# A sibling of self/main.df: imported by "include . -r", because it is not the
+# including file itself.
+other
