@@ -76,7 +76,9 @@ func validateFile(directives []Directive) error {
 	return validateDirectives(directives, 1, Position{})
 }
 
-// pos 是这一层命令所属的父指令位置，只用于深度超限时给出定位。
+// validateDirectives checks the directive tree at the given depth. pos is the
+// position of the parent directive that owns this level (zero at the top level);
+// it is used only to locate a depth-overflow error.
 func validateDirectives(directives []Directive, depth int, pos Position) error {
 	if depth > maxDirectiveDepth {
 		return fmt.Errorf(
@@ -120,17 +122,14 @@ func validateDirectives(directives []Directive, depth int, pos Position) error {
 	return nil
 }
 
+// parser reads a token stream sequentially.
 type parser struct {
 	tokens         []Token
-	nextTokenIndex int // 下一条待读 token 的下标；nextToken 会把它推进一位
+	nextTokenIndex int // index of the next token to read; nextToken advances it
 }
 
 // nextToken returns the next Token and whether one was available.
 // ok is false once all tokens have been consumed.
-//
-// 第二个返回值不能省。Token 的零值是 {Type: UnquotedToken, Text: ""}，
-// 而 UnquotedToken 就是 iota 的 0，零值与合法 token 无法区分——"读完了"
-// 这件事必须靠另一个值表达。不要试图把它简化成单个返回值或换成 error。
 func (p *parser) nextToken() (Token, bool) {
 	if p.nextTokenIndex >= len(p.tokens) {
 		return Token{}, false
