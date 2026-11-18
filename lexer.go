@@ -148,16 +148,16 @@ Start:
 		break
 	}
 
-	// 先处理掉续行符
+	// Handle line continuations before anything else.
 	if ch == BackSlash {
-		// 判断是否与前一个 token 同行
+		// A continuation is only valid on the same line as the previous token.
 		if l.prevToken.Position.Line != pos.Line {
 			goto FindToken
 		}
-		// 判断是否是独立的 Token
+		// Check whether the backslash stands alone.
 		next, err := l.peekRune()
 		if err != nil {
-			if err == io.EOF { // 直接返回 UnquotedToken
+			if err == io.EOF { // At EOF, emit the backslash as an UnquotedToken.
 				tok := Token{
 					Type:     UnquotedToken,
 					Text:     "\\",
@@ -218,7 +218,7 @@ FindToken:
 		return tok, true, nil
 	}
 
-	tok, err := l.scanUnquoted(pos, ch)
+	tok, err := l.scanUnquoted(ch, pos)
 	if err != nil {
 		return Token{}, false, err
 	}
@@ -252,9 +252,8 @@ func (l *lexer) peekRune() (rune, error) {
 	return ch, nil
 }
 
-// 注释结束条件
-// 1 遇到文件末尾
-// 2 遇到换行符
+// scanComment consumes the rest of a comment. It stops at end of file or
+// just before a newline, leaving the newline for the caller.
 func (l *lexer) scanComment() error {
 	for {
 		ch, err := l.peekRune()
@@ -274,9 +273,9 @@ func (l *lexer) scanComment() error {
 	}
 }
 
-// scanUnquoted reads the rest of a bare token.
-// pos 是 first 的位置，也是将要返回的 Token 的位置
-func (l *lexer) scanUnquoted(pos Position, first rune) (Token, error) {
+// scanUnquoted reads the remaining runes and returns an UnquotedToken.
+// pos is the position of first and of the returned UnquotedToken.
+func (l *lexer) scanUnquoted(first rune, pos Position) (Token, error) {
 	text := []rune{first}
 
 	for {
@@ -405,7 +404,7 @@ func (l *lexer) scanDoubleQuoted(pos Position) (Token, error) {
 
 func (l *lexer) scanUnicodeEscape(pos Position, n int) (rune, error) {
 	var value rune
-	for i := 0; i < n; i++ {
+	for range n {
 		ch, err := l.nextRune()
 		if err != nil {
 			return 0, err
@@ -432,11 +431,13 @@ func (l *lexer) scanUnicodeEscape(pos Position, n int) (rune, error) {
 	return value, nil
 }
 
-// ok=false, err=nil  → 不是续行，\ 是普通 token
-// ok=true,  err=nil  → 是合法续行
-// ok=false, err!=nil → 其他错误
+// scanLineContinuation checks for a valid line continuation. If one is found,
+// it consumes the separators following the backslash firstly, then the LF.
+//
+//	ok=false, err=nil  → invalid continuation; the backslash is a plain token
+//	ok=true,  err=nil  → valid continuation
+//	ok=false, err!=nil → other error
 func (l *lexer) scanLineContinuation() (bool, error) {
-	// Consume Token Separator after the backslash.
 	for {
 		ch, err := l.peekRune()
 		if err != nil {
@@ -445,9 +446,9 @@ func (l *lexer) scanLineContinuation() (bool, error) {
 
 		if !IsTokenSeparator(ch) {
 			if ch != LF {
-				return false, nil // 不是续行符 是普通的 Token
+				return false, nil // invalid continuation: the backslash is a plain token
 			}
-			_, err = l.nextRune() // 消耗 LF，不产 NewLine
+			_, err = l.nextRune() // consume the LF without emitting a NewLine token
 			return err == nil, err
 		}
 
@@ -458,10 +459,9 @@ func (l *lexer) scanLineContinuation() (bool, error) {
 }
 
 // 反引号位于一个 Token的开头，由调用者保证
-// `后会一直扫描 rune 直到遇到反引号停止
-//   - peek 下一个 rune 必须是代码分隔符，LF，文件结束io.EOF
-//
-// `...` 内不会执行任何义
+// - 一直扫描 rune 直到遇到反引号停止
+// - peek 下一个 rune 必须是代码分隔符，LF，文件结束io.EOF
+// `...` 内不会执行任何转义，所有字符都原样保留
 func (l *lexer) scanBacktickQuoted(pos Position) (Token, error) {
 	text := make([]rune, 0)
 
